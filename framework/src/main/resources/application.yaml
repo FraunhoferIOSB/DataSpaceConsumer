@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: mx-port-consumer-framework
+ 
+mx-port: []
+  # - name: MX-Port1
+  #   discovery:
+  #     implementation: other.package.DiscoveryImpl
+  #     config: {}
+  #   accessAndUsageControl:
+  #     implementation: other.package.AccessImpl
+  #     config: {}
+  #   gate:
+  #     implementation: other.package.GateImpl
+  #     config: {}
+  #   converter:
+  #     implementation: other.package.ConverterImpl
+  #     config: {}
+  #   adapter:
+  #     implementation: other.package.AdapterImpl
+  #     config: {}
+  #   trigger:
+  #     restHook:
+  #       enabled: true
+  #     scheduler:
+  #       enabled: false
+  #       cron: "0 0/5 * * * ?"
+  #
+  # - name: MX-Port2
+  #   discovery:
+  #     implementation: other.package.DiscoveryImpl
+  #     config: {}
+  #   accessAndUsageControl:
+  #     implementation: other.package.AccessImpl
+  #     config: {}
+  #   gate:
+  #     implementation: other.package.GateImpl
+  #     config: {}
+  #   converter:
+  #     implementation: other.package.ConverterImpl
+  #     config: {}
+  #   adapter:
+  #     implementation: other.package.AdapterImpl
+  #     config: {}
+  #   trigger:
+  #     restHook:
+  #       enabled: true
+  #     scheduler:
+  #       enabled: false
+  #       cron: "0 0/5 * * * ?"
+ 

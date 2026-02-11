@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>your-group-id</groupId>
+  <artifactId>your-artifact-id</artifactId>
+  <name>your-project-name</name>
+
+  <version>${revision}</version>
+  <packaging>jar</packaging>
+
+
+  <properties>
+    <revision>0.0.1-SNAPSHOT</revision>
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <dataspace_consumer.bom.version>0.0.1-SNAPSHOT</dataspace_consumer.bom.version>
+    <dataspace_consumer.api.version>0.0.1-SNAPSHOT</dataspace_consumer.api.version>
+
+    <plugin.id>your-plugin-id/your-artifact-id</plugin.id>
+    <plugin.class/>
+    <plugin.version>${revision}</plugin.version>
+    <plugin.provider>your-organization</plugin.provider>
+    <plugin.dependencies/>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
+        <artifactId>bom</artifactId>
+        <version>${dataspace_consumer.bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>de.fraunhofer.iosb.ilt.dataspace-consumer</groupId>
+      <artifactId>api</artifactId>
+      <version>${dataspace_consumer.api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.pf4j</groupId>
+      <artifactId>pf4j</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <finalName>${project.artifactId}-${project.version}-all</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
+          <attach>false</attach>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            </manifest>
+            <manifestEntries>
+              <Plugin-Id>${plugin.id}</Plugin-Id>
+              <Plugin-Version>${plugin.version}</Plugin-Version>
+              <Plugin-Provider>${plugin.provider}</Plugin-Provider>
+              <Plugin-Class>${plugin.class}</Plugin-Class>
+              <Plugin-Dependencies>${plugin.dependencies}</Plugin-Dependencies>
+            </manifestEntries>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
