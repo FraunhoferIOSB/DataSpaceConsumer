@@ -41,8 +41,12 @@ jobs:
       contents: write    
       security-events: write
       actions: read
+      packages: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_ACTOR: ${{ github.actor }}
 
     steps:
       - name: Checkout repository
@@ -61,6 +65,11 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          # Need to access the packages in private repo
+          # Remove when repo get public
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
 
       - name: Download previous Maven artifacts
         if: ${{ inputs.download-dependencies-artifacts }}
