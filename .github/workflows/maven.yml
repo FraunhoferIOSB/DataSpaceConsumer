@@ -1,0 +1,116 @@
+name: maven.yml
+on:
+  workflow_call:
+    inputs:
+      pom-file:
+        description: "Path to pom.xml file"
+        required: false
+        type: string
+        default: "pom.xml"
+      maven-args:
+        description: "Additional Maven arguments to pass"
+        required: false
+        type: string
+      build-artifact-name:
+        description: "Name of the build artifact to download"
+        required: true
+        type: string
+      build-artifact-path:
+        description: "Path of the build artifact to download"
+        required: true
+        type: string
+      # Need install for local dependencies which are used later in workflow, e.g. for the BOM package
+      install-to-local-repo:
+        description: "Use 'install' instead of 'package' for local dependencies"
+        required: false
+        type: boolean
+        default: false
+      download-dependencies-artifacts:
+        description: "Download Maven artifacts from previous jobs"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  maven:
+    name: Maven Build & Test
+    permissions:
+      contents: write    
+      security-events: write
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Maven Cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Download previous Maven artifacts
+        if: ${{ inputs.download-dependencies-artifacts }}
+        continue-on-error: true
+        uses: actions/download-artifact@v6
+        with:
+          pattern: '*-maven-repo'
+          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace-consumer/
+          merge-multiple: true
+
+      - name: Run Spotless Check
+        run: ./mvnw -f ${{ inputs.pom-file }} -B spotless:check
+        
+      - name: Build & Test Backend
+        run: |
+          if [ "${{ inputs.install-to-local-repo }}" == "true" ]; then
+            ./mvnw -f ${{ inputs.pom-file }} -B ${{ inputs.maven-args }} install
+          else
+            ./mvnw -f ${{ inputs.pom-file }} -B ${{ inputs.maven-args }} package
+          fi
+
+      - name: Update dependency graph
+        if: github.repository == 'FelixHertweck/seatReservation' && github.event_name == 'push' && github.ref_name == 'main'
+        uses: advanced-security/maven-dependency-submission-action@v5
+
+      - name: Upload Backend Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ inputs.build-artifact-name }}
+          path: ${{ inputs.build-artifact-path }}
+          retention-days: 4
+
+      - name: Upload Maven artifacts to local repo cache
+        if: ${{ inputs.install-to-local-repo }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ inputs.build-artifact-name }}-maven-repo
+          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace-consumer/
+          retention-days: 4
+
+      - name: Upload OpenAPI schema
+        uses: actions/upload-artifact@v6
+        with:
+          name: openapi-schema
+          path: |
+            target/openapi
+        
+      - name: Upload Jacoco report
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-report
+          path: |
+            target/jacoco-report

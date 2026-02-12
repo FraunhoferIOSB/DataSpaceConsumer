@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    open-pull-requests-limit: 50
+    schedule:
+      interval: "weekly"
+
+  # maven for backend
+  - package-ecosystem: "maven"
+    directory: "/"
+    open-pull-requests-limit: 50
+    schedule:
+      interval: "weekly"
+
+  # Docker images
+  - package-ecosystem: "docker"
+    directory: "/"
+    open-pull-requests-limit: 50
+    schedule:
+      interval: "weekly"
+
+    # Docker Compose files
+  - package-ecosystem: "docker-compose"
+    open-pull-requests-limit: 20
+    directories:
+      - "/"
+    schedule:
+      interval: "weekly"
