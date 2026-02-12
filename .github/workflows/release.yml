@@ -26,7 +26,7 @@ jobs:
           echo "Release version: $VERSION"
 
       - name: Download extensions artifact
-        uses: dawidd6/action-download-artifact@v3
+        uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml
           name: extensions-artifact
