@@ -159,7 +159,7 @@ This creates a JAR with all dependencies in the `target/` directory, named `your
 Copy the generated JAR file to the `extensions/` directory of your Dataspace Consumer Framework installation:
 
 ```bash
-cp target/my-custom-adapter-0.0.1-SNAPSHOT-all.jar /path/to/framework/extensions/
+cp target/my-custom-adapter-0.0.1-all.jar /path/to/framework/extensions/
 ```
 
 ### 5.2 Reference in Configuration
