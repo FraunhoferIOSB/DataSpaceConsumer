@@ -159,7 +159,7 @@ Option B: Scheduler
 
 ### Docker Deployment
 
-For detailed instructions on how to deploy the Data Space Consumer using Docker, see the [docker README](./docs/docker/README.md).
+For detailed instructions on how to deploy the Data Space Consumer using Docker, see the [docker deployment](./deployment/docker).
 
 ### Helm Chart Deployment
 
