@@ -54,7 +54,7 @@
       <version>${spring.boot.version}</version>
     </dependency>
     <dependency>
-      <groupId>de.fraunhofer.iosb.ilt.dataspace-consumer</groupId>
+      <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
       <artifactId>api</artifactId>
       <version>${dataspace_consumer.api.version}</version>
     </dependency>

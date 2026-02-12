@@ -89,7 +89,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>de.fraunhofer.iosb.ilt.dataspace-consumer</groupId>
+      <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
       <artifactId>api</artifactId>
       <version>${dataspace_consumer.api.version}</version>
       <scope>provided</scope>
