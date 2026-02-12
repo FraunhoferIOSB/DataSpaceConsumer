@@ -35,15 +35,20 @@ jobs:
             bom:
               - 'bom/**'
               - '.github/workflows/build.yml'
+              - '.github/workflows/maven.yml'
             api:
               - 'api/**'
               - '.github/workflows/build.yml'
+              - '.github/workflows/maven.yml'
             framework:
               - 'framework/**'
               - '.github/workflows/build.yml'
+              - '.github/workflows/maven.yml'
+              - '.github/workflows/docker.yml'
             extensions:
               - 'extensions/**'
               - '.github/workflows/build.yml'
+              - '.github/workflows/maven.yml'
 
   build-bom:
     needs: changes
