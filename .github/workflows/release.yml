@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*"
+      - "v*.*.*"
+
+permissions:
+  contents: write
+  packages: read
+  actions: read
+
+jobs:
+  create-release:
+    name: Create Release and Upload Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Release version: $VERSION"
+
+      - name: Download extensions artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: build.yml
+          name: extensions-artifact
+          path: extensions-build/
+          skip_unpack: false
+
+      - name: Find -all.jar files
+        id: find_jars
+        run: |
+          JARS=$(find extensions-build -name "*-all.jar" -type f)
+          if [ -z "$JARS" ]; then
+            echo "No -all.jar files found in artifact!"
+            exit 1
+          fi
+          echo "Found JAR files:"
+          echo "$JARS"
+
+      - name: Create Release and Upload Assets
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+          artifacts: "extensions-build/**/*-all.jar"
+          replacesArtifacts: true
+          artifactErrorsAsWarnings: true
