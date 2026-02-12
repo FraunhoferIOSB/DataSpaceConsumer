@@ -57,7 +57,8 @@ jobs:
     permissions:
       contents: write
       security-events: write
-      actions: read   
+      actions: read
+      packages: read   
     with:
       pom-file: "bom/pom.xml"
       build-artifact-name: bom-artifact
@@ -97,7 +98,8 @@ jobs:
     permissions:
       contents: write
       security-events: write
-      actions: read   
+      actions: read
+      packages: read
     with:
       pom-file: "api/pom.xml"
       build-artifact-name: api-artifact
@@ -133,7 +135,8 @@ jobs:
     permissions:
       contents: write
       security-events: write
-      actions: read   
+      actions: read
+      packages: read
     with:
       pom-file: "framework/pom.xml"
       build-artifact-name: framework-artifact
@@ -164,7 +167,8 @@ jobs:
     permissions:
       contents: write
       security-events: write
-      actions: read   
+      actions: read
+      packages: read
     with:
       pom-file: "extensions/pom.xml"
       build-artifact-name: extensions-artifact
