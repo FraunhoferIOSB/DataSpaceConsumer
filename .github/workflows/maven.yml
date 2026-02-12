@@ -68,7 +68,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           pattern: '*-maven-repo'
-          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace-consumer/
+          path: ~/.m2/repository/de/fraunhofer/iosb/dataspace_consumer/
           merge-multiple: true
 
       - name: Run Spotless Check
@@ -83,8 +83,10 @@ jobs:
           fi
 
       - name: Update dependency graph
-        if: github.repository == 'FelixHertweck/seatReservation' && github.event_name == 'push' && github.ref_name == 'main'
+        if: github.repository == 'FraunhoferIOSB/DataSpaceConsumer' && github.event_name == 'push' && github.ref_name == 'main'
         uses: advanced-security/maven-dependency-submission-action@v5
+        with:
+          maven-file-relative-path: ${{ inputs.pom-file }}
 
       - name: Upload Backend Artifact
         uses: actions/upload-artifact@v6
@@ -98,19 +100,5 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.build-artifact-name }}-maven-repo
-          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace-consumer/
+          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace_consumer/
           retention-days: 4
-
-      - name: Upload OpenAPI schema
-        uses: actions/upload-artifact@v6
-        with:
-          name: openapi-schema
-          path: |
-            target/openapi
-        
-      - name: Upload Jacoco report
-        uses: actions/upload-artifact@v6
-        with:
-          name: jacoco-report
-          path: |
-            target/jacoco-report
