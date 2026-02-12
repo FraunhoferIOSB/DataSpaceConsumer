@@ -65,7 +65,7 @@ jobs:
       - name: Download previous Maven artifacts
         if: ${{ inputs.download-dependencies-artifacts }}
         continue-on-error: true
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           pattern: '*-maven-repo'
           path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace-consumer/
