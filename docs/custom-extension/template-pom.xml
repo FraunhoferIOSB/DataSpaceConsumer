@@ -13,13 +13,13 @@
 
 
   <properties>
-    <revision>0.0.1-SNAPSHOT</revision>
+    <revision>0.0.1</revision>
     <java.version>21</java.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <dataspace_consumer.bom.version>0.0.1-SNAPSHOT</dataspace_consumer.bom.version>
-    <dataspace_consumer.api.version>0.0.1-SNAPSHOT</dataspace_consumer.api.version>
+    <dataspace_consumer.bom.version>0.0.1</dataspace_consumer.bom.version>
+    <dataspace_consumer.api.version>0.0.1</dataspace_consumer.api.version>
 
     <plugin.id>your-plugin-id/your-artifact-id</plugin.id>
     <plugin.class />
