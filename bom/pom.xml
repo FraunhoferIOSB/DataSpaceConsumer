@@ -6,6 +6,14 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/FraunhoferIOSB/DataSpaceConsumer</url>
+    </repository>
+  </distributionManagement>
+
   <properties>
     <java.version>21</java.version>
     <maven.compiler.release>21</maven.compiler.release>

@@ -19,6 +19,14 @@
     </license>
   </licenses>
 
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/FraunhoferIOSB/DataSpaceConsumer</url>
+    </repository>
+  </distributionManagement>
+
   <properties>
     <java.version>21</java.version>
     <maven.compiler.release>21</maven.compiler.release>
@@ -27,6 +35,7 @@
     <spotless.version>3.1.0</spotless.version>
     <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+    <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
 
     <dataspace_consumer.bom.version>0.0.1-SNAPSHOT</dataspace_consumer.bom.version>
   </properties>
@@ -53,6 +62,13 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
   </dependencies>
+
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/FraunhoferIOSB/DataSpaceConsumer</url>
+    </repository>
+  </repositories>
 
   <build>
     <plugins>
@@ -82,7 +98,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>${maven-compiler-plugin.version}</version>
+        <version>${maven-javadoc-plugin.version}</version>
         <executions>
           <execution>
             <id>attach-javadocs</id>
@@ -92,22 +108,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- 
-	<plugin>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-gpg-plugin</artifactId>
-		<version>3.1.0</version>
-		<executions>
-		<execution>
-		<id>sign-artifacts</id>
-		<goals>
-		<goal>sign</goal>
-		</goals>
-		<phase>verify</phase>
-		</execution>
-		</executions>
-	</plugin> -->
 
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
