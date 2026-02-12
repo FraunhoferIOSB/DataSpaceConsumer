@@ -27,7 +27,7 @@ jobs:
       framework: ${{ steps.filter.outputs.framework }}
       extensions: ${{ steps.filter.outputs.extensions }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -67,7 +67,7 @@ jobs:
       packages: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
           java-version: '21'
@@ -108,7 +108,7 @@ jobs:
       packages: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
           java-version: '21'
