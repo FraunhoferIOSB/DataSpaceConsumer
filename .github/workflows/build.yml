@@ -163,5 +163,5 @@ jobs:
     with:
       pom-file: "extensions/pom.xml"
       build-artifact-name: extensions-artifact
-      build-artifact-path: extensions/target/
+      build-artifact-path: extensions/**/target/
       download-dependencies-artifacts: true
