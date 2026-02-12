@@ -1,7 +1,7 @@
 spring:
   application:
-    name: mx-port-consumer-framework
- 
+    name: dataspace-consumer-framework
+
 mx-port: []
   # - name: MX-Port1
   #   discovery:
