@@ -68,7 +68,7 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           pattern: '*-maven-repo'
-          path: ~/.m2/repository/de/fraunhofer/iosb/dataspace_consumer/
+          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace_consumer/
           merge-multiple: true
 
       - name: Run Spotless Check
