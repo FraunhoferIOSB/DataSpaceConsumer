@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dataspace-consumer-framework.fullname" . }}
+  labels:
+    {{- include "dataspace-consumer-framework.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "dataspace-consumer-framework.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "dataspace-consumer-framework.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "dataspace-consumer-framework.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.extensions.enabled }}
+      initContainers:
+      - name: download-extensions
+        image: {{ .Values.extensions.initImage }}
+        imagePullPolicy: IfNotPresent
+        command:
+          - /bin/sh
+          - -c
+          - |
+            set -e
+            echo "Downloading extensions..."
+            mkdir -p /app/extensions
+            {{- if and .Values.extensions.registry .Values.extensions.registry.username }}
+            {{- range .Values.extensions.files }}
+            echo "Downloading {{ .filename }}..."
+            curl -L --user "{{ $.Values.extensions.registry.username }}:{{ $.Values.extensions.registry.password }}" \
+              -o /app/extensions/{{ .filename }} \
+              {{ $.Values.extensions.source }}{{ .url }}
+            {{- end }}
+            {{- else }}
+            {{- range .Values.extensions.files }}
+            echo "Downloading {{ .filename }}..."
+            curl -L -o /app/extensions/{{ .filename }} {{ $.Values.extensions.source }}{{ .url }}
+            {{- end }}
+            {{- end }}
+            echo "Extensions download completed"
+        volumeMounts:
+        - name: extensions
+          mountPath: /app/extensions
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        env:
+        {{- toYaml .Values.env | nindent 10 }}
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        {{- if .Values.extensions.enabled }}
+        - name: extensions
+          mountPath: /app/extensions
+        {{- end }}
+        {{- if .Values.volumes.data.enabled }}
+        - name: data
+          mountPath: /app/data
+        {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "dataspace-consumer-framework.fullname" . }}-config
+      {{- if .Values.extensions.enabled }}
+      - name: extensions
+        emptyDir: {}
+      {{- end }}
+      {{- if .Values.volumes.data.enabled }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "dataspace-consumer-framework.fullname" . }}-data
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

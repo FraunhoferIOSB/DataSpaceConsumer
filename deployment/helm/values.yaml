@@ -1,0 +1,147 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/fraunhoferiosb/dataspaceconsumer-framework
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: dataspace-consumer.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: dataspace-consumer-tls
+  #    hosts:
+  #      - dataspace-consumer.local
+
+resources: {}
+  # limits:
+  #   cpu: 1000m
+  #   memory: 1Gi
+  # requests:
+  #   cpu: 500m
+  #   memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+volumes:
+  # Persistent volume for data directory
+  data:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 1Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+env:
+  # Spring Boot configuration
+  - name: SPRING_CONFIG_LOCATION
+    value: /app/config/application.yml
+  # PF4J plugin directories
+  - name: PF4J_PLUGINS_DIR
+    value: /app/extensions
+
+# Application configuration
+config:
+  application.yml: |
+    # Custom config - Add your application configuration here
+    spring:
+      application:
+        name: dataspace-consumer-framework
+
+    mx-port: []
+      # - name: MX-Port1
+      #   discovery:
+      #     implementation: other.package.DiscoveryImpl
+      #     config: {}
+      #   accessAndUsageControl:
+      #     implementation: other.package.AccessImpl
+      #     config: {}
+      #   gate:
+      #     implementation: other.package.GateImpl
+      #     config: {}
+      #   converter:
+      #     implementation: other.package.ConverterImpl
+      #     config: {}
+      #   adapter:
+      #     implementation: other.package.AdapterImpl
+      #     config: {}
+      #   trigger:
+      #     restHook:
+      #       enabled: true
+      #     scheduler:
+      #       enabled: false
+      #       cron: "0 0/5 * * * ?"
+
+# Extensions configuration
+extensions:
+  # Enable loading extensions via init container
+  enabled: false
+  # Image for init container that downloads/copies extensions
+  # Can be any image with curl, wget, or kubectl installed (default: curl)
+  initImage: curlimages/curl:latest
+  # Source where extensions are hosted (base URL, no trailing slash)
+  # Examples:
+  #   - https://github.com/FraunhoferIOSB/dataspaceconsumer-framework/releases/download/v0.0.1
+  #   - https://my-registry.com/extensions/
+  #   - s3://my-bucket/extensions/
+  source: ""
+  # List of extension JAR files to download
+  # Structure: filename (how to save locally) + url (path to append to source)
+  # Examples:
+  #   - filename: "aas-dsp-discovery-extension.jar"
+  #     url: "/download-url"
+  #   - filename: "console-adapter-extension.jar"
+  #     url: "/download-url"
+  files: []
+  # Optional: registry credentials for private registries
+  # registry:
+    # username: ""
+    # password: ""
+    # Or use an existing secret:
+    # existingSecret: my-registry-secret

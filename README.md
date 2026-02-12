@@ -163,7 +163,7 @@ For detailed instructions on how to deploy the Data Space Consumer using Docker,
 
 ### Helm Chart Deployment
 
-comming soon
+For detailed instructions on how to deploy the Data Space Consumer using the Helm chart, see the [helm deployment](./deployment/helm).
 
 ## Development
 

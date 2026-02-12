@@ -1,0 +1,17 @@
+{{- if .Values.volumes.data.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "dataspace-consumer-framework.fullname" . }}-data
+  labels:
+    {{- include "dataspace-consumer-framework.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.volumes.data.accessMode }}
+  {{- if .Values.volumes.data.storageClass }}
+  storageClassName: {{ .Values.volumes.data.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.volumes.data.size }}
+{{- end }}
