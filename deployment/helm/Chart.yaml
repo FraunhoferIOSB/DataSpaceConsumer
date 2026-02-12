@@ -1,0 +1,13 @@
+apiVersion: v2
+name: dataspace-consumer-framework
+description: A Helm chart for Dataspace Consumer Framework
+type: application
+version: 0.1.0
+appVersion: "latest"
+keywords:
+  - dataspace
+  - consumer
+  - framework
+home: https://github.com/FraunhoferIOSB/dataspaceconsumer-framework
+maintainers:
+  - name: Fraunhofer IOSB
