@@ -22,14 +22,15 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      bom: ${{ steps.filter.outputs.bom }}
-      api: ${{ steps.filter.outputs.api }}
-      framework: ${{ steps.filter.outputs.framework }}
-      extensions: ${{ steps.filter.outputs.extensions }}
+      bom: ${{ github.ref_type == 'tag' || steps.filter.outputs.bom }}
+      api: ${{ github.ref_type == 'tag' || steps.filter.outputs.api }}
+      framework: ${{ github.ref_type == 'tag' || steps.filter.outputs.framework }}
+      extensions: ${{ github.ref_type == 'tag' || steps.filter.outputs.extensions }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.ref_type != 'tag'
         with:
           filters: |
             bom:
@@ -174,3 +175,45 @@ jobs:
       build-artifact-name: extensions-artifact
       build-artifact-path: extensions/**/target/
       download-dependencies-artifacts: true
+
+  release:
+    needs: [build-bom, build-api, build-framework, docker-framework, build-extensions]
+    if: |
+      always() &&
+      github.ref_type == 'tag' &&
+      needs.build-bom.result == 'success' &&
+      needs.build-api.result == 'success' &&
+      needs.build-framework.result == 'success' &&
+      needs.docker-framework.result == 'success' &&
+      needs.build-extensions.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download framework artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: framework-artifact
+          path: framework-artifacts/
+      - name: Download extensions artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: extensions-artifact
+          path: extensions-artifacts/
+      - name: Upload framework JAR to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: framework-artifacts/target/*.jar
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true
+      - name: Upload extension JARs to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: extensions-artifacts/**/*-all.jar
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true
