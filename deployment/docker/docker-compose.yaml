@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  dataspace-consumer:
+    # Use pre-built image from GitHub Container Registry
+    image: ghcr.io/fraunhoferiosb/dataspaceconsumer-framework:latest
+
+    # Use local build
+    # build:
+    #  context: ../..
+    #  dockerfile: framework/Dockerfile
+    # image: dataspace-consumer-framework:latest
+
+    container_name: dataspace-consumer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount extensions
+      - ./extensions:/app/extensions:ro
+      # Mount application configuration
+      - ./config/application.yml:/app/config/application.yml:ro
+      # Persistent data directory
+      - data:/app/data
+    environment:
+      # Spring Boot configuration
+      - SPRING_CONFIG_LOCATION=/app/config/application.yml
+      # PF4J plugin directories
+      - PF4J_PLUGINS_DIR=/app/extensions
+
+volumes:
+  data:
