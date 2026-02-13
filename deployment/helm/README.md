@@ -50,7 +50,7 @@ config:
     mx-port:
       - name: MX-Port1
         discovery:
-          implementation: de.fraunhofer.iosb.ilt.faaast.service.AasDiscovery
+          implementation: de.fraunhofer.iosb.ilt.dataspace_consumer.aas-dsp-discovery-extension
           config:
             aasServer: http://localhost:8080
 ```
