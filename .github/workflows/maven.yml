@@ -83,7 +83,7 @@ jobs:
       - name: Run Spotless Check
         run: ./mvnw -f ${{ inputs.pom-file }} -B spotless:check
         
-      - name: Build & Test Backend
+      - name: Build & test maven project
         run: |
           if [ "${{ inputs.install-to-local-repo }}" == "true" ]; then
             ./mvnw -f ${{ inputs.pom-file }} -B ${{ inputs.maven-args }} install
@@ -97,7 +97,7 @@ jobs:
         with:
           maven-args: -f ${{ inputs.pom-file }}
 
-      - name: Upload Backend Artifact
+      - name: Upload maven build artifacts
         uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.build-artifact-name }}
