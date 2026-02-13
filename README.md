@@ -146,7 +146,15 @@ Option A: REST Hook
       restHook:
         enabled: true
 ```
-→ Trigger via REST: `POST trigger?mxPortName={mxPortName}`
+→ Trigger via REST to /trigger with request body mxPortName: 
+```bash
+curl --request POST \
+  --url http://localhost:8080/trigger \
+  --header 'content-type: application/json' \
+  --data '{
+  "mxPortName": {mxPortName}
+}'
+```
 
 Option B: Scheduler
 ```yaml
