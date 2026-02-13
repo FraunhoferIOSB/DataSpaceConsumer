@@ -2,6 +2,10 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.trigger;
 
 import java.util.concurrent.CompletableFuture;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
@@ -11,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -36,7 +40,32 @@ public class RestHookTrigger extends Trigger {
      * @return HTTP response indicating the result of the trigger request
      */
     @PostMapping("/trigger")
-    public ResponseEntity<Void> trigger(@RequestParam String mxPortName) {
+    public ResponseEntity<Void> trigger(@RequestBody String body) throws JsonMappingException {
+        // Parse body json to portName
+        String mxPortName;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(body);
+            JsonNode node = null;
+            if (root.has("mxPortName")) {
+                node = root.get("mxPortName");
+            }
+
+            if (node == null || node.isNull() || node.asText().trim().isEmpty()) {
+                LOGGER.warn(
+                        "RestHook invoked with missing or empty 'mxPortName' in body: {}", body);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
+            mxPortName = node.asText().trim();
+        } catch (JsonProcessingException e) {
+            LOGGER.warn(
+                    "Failed to parse RestHook request body: {} - raw body: {}",
+                    e.getMessage(),
+                    body);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
         // Check if provided name corresponds to a known MX-Port
         DSCConfig portConfig = mxPortService.getPortByName(mxPortName);
         if (portConfig == null) {
