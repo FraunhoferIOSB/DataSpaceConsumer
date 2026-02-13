@@ -217,7 +217,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: framework-artifacts/target/*.jar
+          file: framework-artifacts/*.jar
           file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
