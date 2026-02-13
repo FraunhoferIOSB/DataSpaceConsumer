@@ -5,8 +5,11 @@ on:
     branches: [ "main" ]
     paths-ignore: [ "**/*.md" ]
     tags:
-      - "v*.*"
       - "v*.*.*"
+      - "bom-v*.*.*"
+      - "api-v*.*.*"
+      - "framework-v*.*.*"
+      - "extensions-v*.*.*"
   pull_request:
     branches: [ "main" ]
     paths-ignore: [ "**/*.md" ]
@@ -22,10 +25,10 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      bom: ${{ github.ref_type == 'tag' || steps.filter.outputs.bom }}
-      api: ${{ github.ref_type == 'tag' || steps.filter.outputs.api }}
-      framework: ${{ github.ref_type == 'tag' || steps.filter.outputs.framework }}
-      extensions: ${{ github.ref_type == 'tag' || steps.filter.outputs.extensions }}
+      bom: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/bom-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.bom == 'true') }}
+      api: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/api-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.api == 'true') }}
+      framework: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.framework == 'true') }}
+      extensions: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/extensions-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.extensions == 'true') }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
@@ -68,7 +71,9 @@ jobs:
 
   publish-bom:
     needs: build-bom
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/bom-v')))
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -110,7 +115,9 @@ jobs:
 
   publish-api:
     needs: build-api
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/api-v')))
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -181,27 +188,32 @@ jobs:
     if: |
       always() &&
       github.ref_type == 'tag' &&
-      needs.build-bom.result == 'success' &&
-      needs.build-api.result == 'success' &&
-      needs.build-framework.result == 'success' &&
-      needs.docker-framework.result == 'success' &&
-      needs.build-extensions.result == 'success'
+      (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v') || startsWith(github.ref, 'refs/tags/extensions-v') || startsWith(github.ref, 'refs/tags/bom-v') || startsWith(github.ref, 'refs/tags/api-v')) &&
+      (needs.build-framework.result == 'success' || needs.build-framework.result == 'skipped') &&
+      (needs.docker-framework.result == 'success' || needs.docker-framework.result == 'skipped') &&
+      (needs.build-extensions.result == 'success' || needs.build-extensions.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      isFrameworkRelease: ${{ needs.build-framework.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v')) }}
+      isExtensionsRelease: ${{ needs.build-extensions.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/extensions-v')) }}
     steps:
       - uses: actions/checkout@v6
       - name: Download framework artifacts
+        if: ${{ needs.release.outputs.isFrameworkRelease == 'true' }}
         uses: actions/download-artifact@v7
         with:
           name: framework-artifact
           path: framework-artifacts/
       - name: Download extensions artifacts
+        if: ${{ needs.release.outputs.isExtensionsRelease == 'true' }}
         uses: actions/download-artifact@v7
         with:
           name: extensions-artifact
           path: extensions-artifacts/
       - name: Upload framework JAR to release
+        if: ${{ needs.release.outputs.isFrameworkRelease == 'true' }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -210,6 +222,7 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
       - name: Upload extension JARs to release
+        if: ${{ needs.release.outputs.isExtensionsRelease == 'true' }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
