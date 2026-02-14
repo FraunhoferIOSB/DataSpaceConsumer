@@ -42,7 +42,7 @@ cd extensions
 
 mvn spotless:apply
 
-mvn clean install
+mvn clean package
 ```
 
 ### Framework
@@ -64,7 +64,10 @@ cd framework
 
 mvn spotless:apply
 
-mvn clean install
+mvn spring-boot:run
 # Or run with application-dev.yaml 
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Bundle the application into a jar file
+mvn clean package
 ```
