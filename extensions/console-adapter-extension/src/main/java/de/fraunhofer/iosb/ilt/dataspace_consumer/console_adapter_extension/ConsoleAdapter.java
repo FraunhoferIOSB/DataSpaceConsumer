@@ -48,7 +48,7 @@ public class ConsoleAdapter implements Adapter {
         byte[] payload = request.getPayload();
 
         LOG.info("=== ConsoleAdapter ===");
-        LOG.info("Payload-Typ: {}", payload.getClass().getName());
+        LOG.info("Payload-Typ: {}", request.getType());
         LOG.info("Payload-Inhalt:\n{}", new String(payload, StandardCharsets.UTF_8));
         LOG.info("============================");
     }
