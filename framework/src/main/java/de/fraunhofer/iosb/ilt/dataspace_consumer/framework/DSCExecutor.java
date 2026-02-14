@@ -70,7 +70,9 @@ public class DSCExecutor {
 
         // Retrieve converter capabilities
         ConverterCapabilities converterCapabilities = converter.getCapabilities();
-        LOGGER.info("Converter capabilities retrieved: {}", converterCapabilities);
+        LOGGER.info(
+                "Converter capabilities retrieved: {}",
+                converterCapabilities.getSupportedFormats());
 
         // 1. (Layer 5): Execute Discovery and obtain gate requests
         // uses 4. (layer 4): access control
