@@ -15,6 +15,8 @@ This framework enables data consumers (e.g. buyers, platforms, partners) to auto
 
 ## Data Space Consumer Architecture
 
+The architecture of the “Data Space Consumer” is modular and allows different extensions to be configured for data requests and data output. The various extensions offer functions for the discovery, access and usage control, gate, converter and adapter layers out of the box with components like the [faaast-gate-extension](./extensions/faaast-gate-extension/).
+
 ![Data Space Consumer Architecture](docs/src/images/DataSpaceConsumer_Architecture.png)
 
 
