@@ -66,7 +66,7 @@ mvn spotless:apply
 
 mvn spring-boot:run
 # Or run with application-dev.yaml 
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
+mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
 
 # Bundle the application into a jar file
 mvn clean package
