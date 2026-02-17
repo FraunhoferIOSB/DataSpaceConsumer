@@ -3,12 +3,12 @@
 | Data Space Consumer is still under development. Contributions are highly welcome. |
 | --------------------------------------------------------------------------------- |
 
-The **Data Space Consumer** automates the retrieval of authorised data via [MX ports](https://factory-x.org/wp-content/uploads/MX-Port-Concept-V1.10.pdf) within data spaces.
+The **Data Space Consumer** automates the retrieval of authorised data via [MX-Ports](https://factory-x.org/wp-content/uploads/MX-Port-Concept-V1.10.pdf) within data spaces.
 
 The Data Space Consumer is being developed and tested as part of [**Factory-X**](https://factory-x.org/), a data space initiative for the digitalization of supply chains in industry with the aim of creating an open and collaborative digital ecosystem for factory equipment suppliers and operators. Factory-X is part of the [**Manufacturing-X**](https://www.plattform-i40.de/IP/Navigation/DE/Manufacturing-X/Initiative/initiative-manufacturing-x.html) initiative, which aims to enable companies to share their data confidently and collaboratively across the entire manufacturing and supply chain.
 
 The **Data Space Consumer** offers a modular framework for retrieving authorised manufacturing and supply chain data.
-This framework enables data consumers (e.g. buyers, platforms, partners) to automatically retrieve manufacturing and supply chain data shared by data providers such as manufacturers. The aim is to support the various MX port variants and thus enable secure and standardized data exchange.
+This framework enables data consumers (e.g. buyers, platforms, partners) to automatically retrieve manufacturing and supply chain data shared by data providers such as manufacturers. The aim is to support the various MX-Port variants and thus enable secure and standardized data exchange.
 
 ![Data Space Consumer](docs/src/images/DataSpaceConsumer.png)
 
@@ -32,7 +32,7 @@ The architecture of the “Data Space Consumer” is modular and allows differen
 | **Trigger Interface**                      | Interface for generic trigger components.                                                                                             |
 | **Scheduler**                              | Scheduler for setting API request intervals.                                                                                          |
 | **REST Hook**                              | REST hook that can be addressed as an alternative to the scheduler.                                                                   |
-| **Extension-Config**                       | The individual MX port variants can be configured using a config file.                                                                |
+| **Extension-Config**                       | The individual MX-Port variants can be configured using a config file.                                                                |
 | **Hercules Extension**                     | Hercules Extension for secure data exchange via Data Space Protocol (DSP), Decentralized Claims Protocol (DCP) and AAS.               |
 | **Leo Extension**                          | Leo Extension for secure data exchange via AAS and AAS Security.                                                                      |
 | **Orion Extension**                        | Orion Extension for secure data exchange via Data Space Protocol (DSP), Decentralized Claims Protocol (DCP) and OPC UA.               |
@@ -71,17 +71,17 @@ The architecture of the “Data Space Consumer” is modular and allows differen
 
 ---
 ### Hercules Extension
-Data exchange via MX port Hercules for secure data exchange via [Data Space Protocol (DSP)](https://github.com/eclipse-dataspace-protocol-base/DataspaceProtocol) and [Decentralized Claims Protocol (DCP)](https://github.com/eclipse-dataspace-dcp/decentralized-claims-protocol) using the Asset Administration Shell (AAS) as the data model.
-When using the MX port Hercules extension, the following [Factory-X Architecture Decision Records](https://factory-x-contributions.github.io/architecture-decisions/) are fulfilled.
+Data exchange via MX-Port Hercules for secure data exchange via [Data Space Protocol (DSP)](https://github.com/eclipse-dataspace-protocol-base/DataspaceProtocol) and [Decentralized Claims Protocol (DCP)](https://github.com/eclipse-dataspace-dcp/decentralized-claims-protocol) using the Asset Administration Shell (AAS) as the data model.
+When using the MX-Port Hercules extension, the following [Factory-X Architecture Decision Records](https://factory-x-contributions.github.io/architecture-decisions/) are fulfilled.
 - [ADR 002 – Cross-Company Authorization and Discovery](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr002-authorization-discovery)
 - [ADR 003 – Authentication for Dataspace](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr003-authentication)
 - [ADR 008 – Asset Administration Shell Profile for Factory-X](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr008-aas-profile)
 - [ADR 009 – Discovery of AAS Services via DSP](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr009-aas-rest-dsp)
 
-#### Data exchange steps via the MX port Hercules
-![Data exchange via MX port Hercules](docs/src/images/DataExchangeHercules.png)
+#### Data exchange steps via the MX-Port Hercules
+![Data exchange via MX-Port Hercules](docs/src/images/DataExchangeHercules.png)
 
-The data exchange steps via MX port Hercules are based on: [Based on the Catena-X Connector KIT](https://eclipse-tractusx.github.io/docs-kits/kits/connector-kit/adoption-view/#interaction-overview)
+The data exchange steps via MX-Port Hercules are based on: [Based on the Catena-X Connector KIT](https://eclipse-tractusx.github.io/docs-kits/kits/connector-kit/adoption-view/#interaction-overview)
 
 The figure shows the interaction between a data consumer and a data provider. The first action is done by the provider, by preparing the necessary resources to offer data to potential consumers:
 - P1: **Provide** the **data** according to the offered contract definitions and in the transfer type technology used, e.g., operate a resource server like a **Digital Twin Registry** and a **AAS Repository**.
