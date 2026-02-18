@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,6 +15,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.SubProtocolType;
@@ -384,6 +388,9 @@ public class AccessUsageControlImpl
         return types;
     }
 
+    private Cache<DSPRequest, AuthorizationContext> negotiationCache =
+            Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).build();
+
     /**
      * Initiate access negotiation for the provided DSP access request.
      *
@@ -398,11 +405,17 @@ public class AccessUsageControlImpl
     @Override
     public AuthorizationContext initAccess(DSPRequest accessRequest) throws DSCExecuteException {
 
+        AuthorizationContext cached = negotiationCache.getIfPresent(accessRequest);
+        if (cached != null) {
+            return cached;
+        }
         InitData initData = getPolicyFromCatalog(accessRequest);
         String negotiationId = initiateNegotiation(initData);
         LOGGER.log(Level.FINE, "asset id: {0}", initData.assetId());
         LOGGER.log(Level.FINE, "negotiation id: {0}", negotiationId);
-        return new AuthorizationContext(negotiationId, initData.assetId());
+        AuthorizationContext context = new AuthorizationContext(negotiationId, initData.assetId());
+        negotiationCache.put(accessRequest, context);
+        return context;
     }
 
     /**
@@ -448,6 +461,40 @@ public class AccessUsageControlImpl
         return negotiationStateDTO.state().equals("FINALIZED");
     }
 
+    Cache<AuthorizationContext, EdrDTO> tokenCache =
+            Caffeine.newBuilder()
+                    .expireAfter(
+                            new Expiry<AuthorizationContext, EdrDTO>() {
+                                @Override
+                                public long expireAfterCreate(
+                                        AuthorizationContext key, EdrDTO value, long currentTime) {
+                                    long seconds =
+                                            Long.parseLong(value.expiresIn())
+                                                    - 10; // 10s for all subsequent operations until
+                                    // token expires
+                                    return TimeUnit.SECONDS.toNanos(seconds);
+                                }
+
+                                @Override
+                                public long expireAfterUpdate(
+                                        AuthorizationContext key,
+                                        EdrDTO value,
+                                        long currentTime,
+                                        long currentDuration) {
+                                    return currentDuration;
+                                }
+
+                                @Override
+                                public long expireAfterRead(
+                                        AuthorizationContext key,
+                                        EdrDTO value,
+                                        long currentTime,
+                                        long currentDuration) {
+                                    return currentDuration;
+                                }
+                            })
+                    .build();
+
     /**
      * Obtain an AccessResponse (endpoint + token) for the given AuthorizationContext.
      *
@@ -464,6 +511,11 @@ public class AccessUsageControlImpl
     public AccessResponse getTokenForAccess(AuthorizationContext context)
             throws DSCExecuteException {
 
+        EdrDTO cached = tokenCache.getIfPresent(context);
+        if (cached != null) {
+            return new AccessResponse(cached.endpoint(), cached.authorization(), context.assetId());
+        }
+
         AvailableEdrDTO edr;
         try {
             edr = getAvailableEDRResponse(context.assetId()).getFirst();
@@ -472,8 +524,10 @@ public class AccessUsageControlImpl
         }
         String newestTransferProcessID = edr.transferProcessId();
         EdrDTO dto = getEDRTokenResponse(newestTransferProcessID);
+        tokenCache.put(context, dto);
         LOGGER.log(Level.FINE, "endpoint: {0}", dto.endpoint());
         LOGGER.log(Level.FINE, "token: {0}", maskToken(dto.authorization(), 4));
+
         return new AccessResponse(dto.endpoint(), dto.authorization(), context.assetId());
     }
 
@@ -485,7 +539,7 @@ public class AccessUsageControlImpl
      * @param visible number of characters to keep visible at each end
      * @return the masked token string
      */
-    public static String maskToken(String token, int visible) {
+    private static String maskToken(String token, int visible) {
         if (token == null || token.isEmpty()) {
             return token;
         }
