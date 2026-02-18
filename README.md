@@ -73,10 +73,24 @@ The architecture of the “Data Space Consumer” is modular and allows differen
 ### Hercules Extension
 Data exchange via MX-Port Hercules for secure data exchange via [Data Space Protocol (DSP)](https://github.com/eclipse-dataspace-protocol-base/DataspaceProtocol) and [Decentralized Claims Protocol (DCP)](https://github.com/eclipse-dataspace-dcp/decentralized-claims-protocol) using the Asset Administration Shell (AAS) as the data model.
 When using the MX-Port Hercules extension, the following [Factory-X Architecture Decision Records](https://factory-x-contributions.github.io/architecture-decisions/) are fulfilled.
-- [ADR 002 – Cross-Company Authorization and Discovery](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr002-authorization-discovery)
-- [ADR 003 – Authentication for Dataspace](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr003-authentication)
-- [ADR 008 – Asset Administration Shell Profile for Factory-X](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr008-aas-profile)
-- [ADR 009 – Discovery of AAS Services via DSP](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules/adr009-aas-rest-dsp)
+
+#### Data Provider
+The Data Provider MUST expose the endpoints according to the following Architecture Decision Records (ADRs):
+
+| Architecture Decision Record (ADR)            | Version         | Link                      | 
+| ------------------- | ------------ | ------------------------------------------------------ | 
+| ADR 002 – Cross-Company Authorization and Discovery Version 0.2.0        | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery | 
+| ADR 003 – Authentication for Dataspaces Version 0.2.0                    | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication | 
+| ADR 008 – Asset Administration Shell Profile for Factory-X Version 0.2.0 | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr008-aas-profile | 
+| ADR 009 – Discovery of AAS Services via DSP Version 0.2.0                | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp | 
+
+#### Data Consumer
+The Data Consumer MUST expose the endpoints according to the following Architecture Decision Records (ADRs):
+
+| Architecture Decision Record (ADR)            | Version         | Link                      | 
+| ------------------- | ------------ | ------------------------------------------------------ | 
+| ADR 002 – Cross-Company Authorization and Discovery Version 0.2.0        | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery | 
+| ADR 003 – Authentication for Dataspaces Version 0.2.0                    | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication | 
 
 #### Data exchange steps via the MX-Port Hercules
 ![Data exchange via MX-Port Hercules](docs/src/images/DataExchangeHercules.png)
