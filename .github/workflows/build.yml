@@ -25,10 +25,18 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
+      # Build BOM if: it's a BOM/general release tag, OR BOM files changed
       bom: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/bom-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.bom == 'true') }}
-      api: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/api-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.api == 'true') }}
-      framework: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.framework == 'true') }}
-      extensions: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/extensions-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.extensions == 'true') }}
+
+      # Build API if: it's an API/general release tag, OR API files changed, OR BOM changed (dependency)
+      api: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/api-v'))) || (github.ref_type != 'tag' && (steps.filter.outputs.api == 'true' || steps.filter.outputs.bom == 'true')) }}
+
+      # Build Framework if: it's a Framework/general release tag, OR Framework files changed, OR any upstream dependency (API, BOM) changed
+      framework: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v'))) || (github.ref_type != 'tag' && (steps.filter.outputs.framework == 'true' || steps.filter.outputs.api == 'true' || steps.filter.outputs.bom == 'true')) }}
+
+      # Build Extensions if: it's an Extensions/general release tag, OR Extensions files changed, OR any upstream dependency (API, BOM) changed
+      extensions: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/extensions-v'))) || (github.ref_type != 'tag' && (steps.filter.outputs.extensions == 'true' || steps.filter.outputs.api == 'true' || steps.filter.outputs.bom == 'true')) }}
+    
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
