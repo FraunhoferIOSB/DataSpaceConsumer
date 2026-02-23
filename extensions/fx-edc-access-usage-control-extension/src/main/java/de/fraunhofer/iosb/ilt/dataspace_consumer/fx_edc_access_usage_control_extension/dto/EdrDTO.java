@@ -1,5 +1,6 @@
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -35,7 +36,13 @@ public record EdrDTO(
         @JsonProperty("tx-auth:audience") String audience,
         String endpoint,
         @JsonProperty("tx-auth:refreshToken") String refreshToken,
-        @JsonProperty("tx-auth:expiresIn") String expiresIn,
+        @JsonProperty("expiresIn")
+                @JsonAlias({
+                    "tx-auth:expiresIn",
+                    "expiresIn",
+                    "https://w3id.org/tractusx/auth/expiresIn"
+                })
+                String expiresIn,
         String authorization,
         @JsonProperty("tx-auth:refreshAudience") String refreshAudience,
         @JsonProperty("@context") ContextDTO context) {}

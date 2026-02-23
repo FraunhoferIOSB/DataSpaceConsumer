@@ -1,6 +1,7 @@
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,12 +73,21 @@ public class AccessUsageControlImpl
      */
     public AccessUsageControlImpl() {
         mapper = new ObjectMapper();
-        client = new OkHttpClient().newBuilder().build();
+        client =
+                new OkHttpClient.Builder()
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(10, TimeUnit.SECONDS)
+                        .writeTimeout(10, TimeUnit.SECONDS)
+                        .callTimeout(20, TimeUnit.SECONDS)
+                        .build();
     }
 
     private Response getResponse(Request request, String requestName) {
         try {
             return client.newCall(request).execute();
+        } catch (SocketTimeoutException e) {
+            throw new DSCExecuteException(
+                    "Timeout during " + requestName + " request: " + e.getMessage());
         } catch (IOException exception) {
             throw new DSCExecuteException(
                     "Exception on "
@@ -112,7 +122,9 @@ public class AccessUsageControlImpl
     private <T> T parseJson(JsonSupplier<T> parsingOperation, String requestName)
             throws DSCExecuteException {
         try {
-            return parsingOperation.get();
+            T result = parsingOperation.get();
+            LOGGER.log(Level.FINE, "successfully parsed {0} response", requestName);
+            return result;
         } catch (JsonProcessingException e) {
             throw new DSCExecuteException(
                     "Exception on " + requestName + " response JSON parsing: : " + e.getMessage(),
@@ -468,11 +480,15 @@ public class AccessUsageControlImpl
                                 @Override
                                 public long expireAfterCreate(
                                         AuthorizationContext key, EdrDTO value, long currentTime) {
-                                    long seconds =
-                                            Long.parseLong(value.expiresIn())
-                                                    - 10; // 10s for all subsequent operations until
-                                    // token expires
-                                    return TimeUnit.SECONDS.toNanos(seconds);
+                                    if (value.expiresIn() != null) {
+                                        long seconds =
+                                                Long.parseLong(value.expiresIn())
+                                                        - 10; // 10s for all subsequent operations
+                                        // until
+                                        // token expires
+                                        return TimeUnit.SECONDS.toNanos(seconds);
+                                    }
+                                    return 0; // no expiration info, expire immediately
                                 }
 
                                 @Override

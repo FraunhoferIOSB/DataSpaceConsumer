@@ -54,10 +54,10 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
         mapper = new ObjectMapper();
         client =
                 new OkHttpClient.Builder()
-                        .connectTimeout(30, TimeUnit.SECONDS)
-                        .readTimeout(30, TimeUnit.SECONDS)
-                        .writeTimeout(30, TimeUnit.SECONDS)
-                        .callTimeout(60, TimeUnit.SECONDS)
+                        .connectTimeout(10, TimeUnit.SECONDS)
+                        .readTimeout(10, TimeUnit.SECONDS)
+                        .writeTimeout(10, TimeUnit.SECONDS)
+                        .callTimeout(20, TimeUnit.SECONDS)
                         .build();
     }
 

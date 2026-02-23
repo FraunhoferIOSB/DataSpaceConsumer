@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -120,7 +121,8 @@ public class SubmodelHTTPFetcher {
      */
     public static List<Submodel> getAllSubmodels(URI url, HttpClient client)
             throws ConnectivityException, StatusCodeException {
-        HttpRequest request = HttpHelper.createGetRequest(url);
+        HttpRequest request =
+                HttpRequest.newBuilder().uri(url).timeout(Duration.ofSeconds(10)).GET().build();
         HttpResponse<String> response = HttpHelper.send(client, request);
         validateStatusCode(HttpMethod.GET, response, HttpStatus.OK);
         try {
