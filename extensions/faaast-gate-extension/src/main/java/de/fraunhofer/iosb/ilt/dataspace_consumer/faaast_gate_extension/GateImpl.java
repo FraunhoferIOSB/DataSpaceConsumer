@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.Gate;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponseFormat;
 import de.fraunhofer.iosb.ilt.faaast.client.exception.ConnectivityException;
 import de.fraunhofer.iosb.ilt.faaast.client.exception.StatusCodeException;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.pf4j.Extension;
 
@@ -38,7 +38,7 @@ public class GateImpl implements Gate {
 
             return new GateResponse(
                     200, GateResponseFormat.JSON, headers, payload.getAsBytes(), "");
-        } catch (JsonProcessingException exception) {
+        } catch (SerializationException exception) {
             LOGGER.severe("Failed to process JSON: " + exception.getMessage());
 
         } catch (URISyntaxException exception) {

@@ -3,8 +3,8 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.faaast_gate_extension;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
+import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 
 public class GateResponsePayload {
@@ -12,10 +12,10 @@ public class GateResponsePayload {
     private String json;
     private byte[] bytes;
 
-    public GateResponsePayload(List<Submodel> submodels) throws JsonProcessingException {
+    public GateResponsePayload(List<Submodel> submodels) throws SerializationException {
 
-        ObjectMapper mapper = new ObjectMapper();
-        json = mapper.writeValueAsString(submodels);
+        JsonSerializer serializer = new JsonSerializer();
+        json = serializer.writeList(submodels);
         bytes = json.getBytes(StandardCharsets.UTF_8);
     }
 
