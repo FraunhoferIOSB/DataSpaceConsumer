@@ -45,7 +45,7 @@ public class RestAdapter implements Adapter, Configurable {
     }
 
     private String getContentType(ConverterPayloadType type, Optional<String> encoding) {
-        String baseType = type.toString().toLowerCase();
+        String baseType = type.getMediaType();
         String charset = encoding.map(enc -> "; charset=" + enc).orElse("");
         return baseType + charset;
     }
