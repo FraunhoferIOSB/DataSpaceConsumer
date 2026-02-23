@@ -7,12 +7,12 @@
     <artifactId>extensions</artifactId>
     <version>${revision}</version>
   </parent>
+  <artifactId>rest_adapter_extension</artifactId>
 
   <packaging>jar</packaging>
-  <artifactId>rest-adapter-extension</artifactId>
-  <name>Webview Adapter Extension</name>
+  <name>Rest Adapter Extension</name>
 
   <properties>
-      <plugin.id>rest-adapter-extension</plugin.id>
+    <plugin.id>rest_adapter_extension</plugin.id>
   </properties>
 </project>
