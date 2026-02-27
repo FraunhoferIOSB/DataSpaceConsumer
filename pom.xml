@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
+  <artifactId>parent</artifactId>
+  <version>0.0.2-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Dataspace Consumer Parent</name>
+  <description>Parent POM for the Dataspace Consumer project</description>
+  <url>https://github.com/FraunhoferIOSB/DataSpaceConsumer</url>
+
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
+
+  <modules>
+    <module>bom</module>
+    <module>api</module>
+    <module>framework</module>
+    <module>extensions</module>
+  </modules>
+
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/FraunhoferIOSB/DataSpaceConsumer</url>
+    </repository>
+  </distributionManagement>
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <spotless.version>3.1.0</spotless.version>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/FraunhoferIOSB/DataSpaceConsumer</url>
+    </repository>
+  </repositories>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>${spotless.version}</version>
+        <configuration>
+          <java>
+            <licenseHeader>
+              <file>${maven.multiModuleProjectDirectory}/license-header</file>
+            </licenseHeader>
+            <googleJavaFormat>
+              <version>1.25.2</version>
+              <style>AOSP</style>
+              <reflowLongStrings>true</reflowLongStrings>
+              <formatJavadoc>true</formatJavadoc>
+            </googleJavaFormat>
+            <importOrder>
+              <wildcardsLast>true</wildcardsLast>
+              <order>\#de.fraunhofer.iosb,java,\#</order>
+            </importOrder>
+          </java>
+          <pom>
+            <sortPom>
+              <expandEmptyElements>false</expandEmptyElements>
+              <indentAttribute>schemaLocation</indentAttribute>
+              <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
+              <sortDependencyExclusions/>
+              <sortDependencyManagement/>
+            </sortPom>
+          </pom>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>validate</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
