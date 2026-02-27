@@ -12,6 +12,7 @@
     <module>aas-dsp-discovery-extension</module>
     <module>console-adapter-extension</module>
     <module>faaast-gate-extension</module>
+    <module>file-adapter-extension</module>
     <module>fx-edc-access-usage-control-extension</module>
     <module>simple-converter-extension</module>
     <module>rest-adapter-extension</module>
