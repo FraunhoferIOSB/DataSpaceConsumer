@@ -29,8 +29,6 @@ public class DSCConfig {
     private DSCComponentConfig gate;
     private DSCComponentConfig converter;
     private DSCComponentConfig adapter;
-    private Long negotiationTimeoutMillis;
-    private Integer negotiationMaxRetries;
     private TriggerConfig trigger;
 
     /**
@@ -88,26 +86,6 @@ public class DSCConfig {
     }
 
     /**
-     * Returns the negotiation timeout in milliseconds used when waiting for access negotiation to
-     * finish. May be {@code null} to indicate a default should be used by the executor.
-     *
-     * @return timeout in milliseconds or {@code null}
-     */
-    public Long getNegotiationTimeoutMillis() {
-        return negotiationTimeoutMillis;
-    }
-
-    /**
-     * Returns the maximum number of polling attempts when waiting for negotiation finalization. May
-     * be {@code null} to indicate a default.
-     *
-     * @return maximum retries or {@code null}
-     */
-    public Integer getNegotiationMaxRetries() {
-        return negotiationMaxRetries;
-    }
-
-    /**
      * Returns the optional trigger configuration for this MX-Port (resthook, scheduler, ...).
      *
      * @return trigger configuration or {@code null}
@@ -142,13 +120,5 @@ public class DSCConfig {
 
     public void setAdapter(DSCComponentConfig adapter) {
         this.adapter = adapter;
-    }
-
-    public void setNegotiationMaxRetries(Integer negotiationMaxRetries) {
-        this.negotiationMaxRetries = negotiationMaxRetries;
-    }
-
-    public void setNegotiationTimeoutMillis(Long negotiationTimeoutMillis) {
-        this.negotiationTimeoutMillis = negotiationTimeoutMillis;
     }
 }
