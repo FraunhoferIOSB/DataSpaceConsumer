@@ -71,3 +71,14 @@ mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
 # Bundle the application into a jar file
 mvn clean package
 ```
+
+### Running spotless 
+To run spotless checks across all modules, execute the following command from the project root:
+
+```bash
+# Run spotless apply
+mvn spotless:apply
+
+# Run spotless checks
+mvn spotless:check 
+```

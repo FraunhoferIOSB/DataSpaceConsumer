@@ -3,36 +3,21 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
+  <parent>
+    <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
+    <artifactId>parent</artifactId>
+    <version>0.0.2-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
   <artifactId>api</artifactId>
   <version>0.0.2-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Dataspace Consumer API</name>
   <description>API interfaces for building Dataspace Consumer extensions</description>
-  <url>https://github.com/FraunhoferIOSB/DataSpaceConsumer</url>
-
-  <licenses>
-    <license>
-      <name>Apache License 2.0</name>
-      <url>https://www.apache.org/licenses/LICENSE-2.0</url>
-    </license>
-  </licenses>
-
-  <distributionManagement>
-    <repository>
-      <id>github</id>
-      <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/FraunhoferIOSB/DataSpaceConsumer</url>
-    </repository>
-  </distributionManagement>
 
   <properties>
-    <java.version>21</java.version>
-    <maven.compiler.release>21</maven.compiler.release>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <spotless.version>3.1.0</spotless.version>
     <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
@@ -62,13 +47,6 @@
       <artifactId>jackson-databind</artifactId>
     </dependency>
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/FraunhoferIOSB/DataSpaceConsumer</url>
-    </repository>
-  </repositories>
 
   <build>
     <plugins>
@@ -105,43 +83,6 @@
             <goals>
               <goal>jar</goal>
             </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <version>${spotless.version}</version>
-        <configuration>
-          <java>
-            <googleJavaFormat>
-              <version>1.25.2</version>
-              <style>AOSP</style>
-              <reflowLongStrings>true</reflowLongStrings>
-              <formatJavadoc>true</formatJavadoc>
-            </googleJavaFormat>
-            <importOrder>
-              <wildcardsLast>true</wildcardsLast>
-              <order>\#de.fraunhofer.iosb,java,\#</order>
-            </importOrder>
-          </java>
-          <pom>
-            <sortPom>
-              <expandEmptyElements>false</expandEmptyElements>
-              <indentAttribute>schemaLocation</indentAttribute>
-              <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-              <sortDependencyExclusions/>
-              <sortDependencyManagement/>
-            </sortPom>
-          </pom>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>validate</phase>
           </execution>
         </executions>
       </plugin>

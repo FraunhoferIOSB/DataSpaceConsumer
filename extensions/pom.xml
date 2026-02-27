@@ -3,10 +3,19 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
+  <parent>
+    <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
+    <artifactId>parent</artifactId>
+    <version>0.0.2-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
   <artifactId>extensions</artifactId>
   <version>${revision}</version>
   <packaging>pom</packaging>
+
+  <name>Dataspace Consumer Extensions</name>
+  <description>Collection of extensions for the Dataspace Consumer</description>
 
   <modules>
     <module>aas-dsp-discovery-extension</module>
@@ -19,9 +28,6 @@
 
   <properties>
     <revision>0.0.2-SNAPSHOT</revision>
-    <java.version>21</java.version>
-    <maven.compiler.release>21</maven.compiler.release>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <dataspace_consumer.bom.version>0.0.2-SNAPSHOT</dataspace_consumer.bom.version>
     <dataspace_consumer.api.version>0.0.2-SNAPSHOT</dataspace_consumer.api.version>
@@ -29,7 +35,6 @@
     <okhttp.version>4.12.0</okhttp.version>
     <faaast.client.version>1.0.0</faaast.client.version>
     <digitaltwin.aas4j.version>2.0.1</digitaltwin.aas4j.version>
-    <spotless.version>3.1.0</spotless.version>
 
     <!-- Override below properties in each plugin's pom.xml -->
     <plugin.id/>
@@ -152,42 +157,6 @@
               <goal>single</goal>
             </goals>
             <phase>package</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <version>${spotless.version}</version>
-        <configuration>
-          <java>
-            <googleJavaFormat>
-              <version>1.25.2</version>
-              <style>AOSP</style>
-              <reflowLongStrings>true</reflowLongStrings>
-              <formatJavadoc>true</formatJavadoc>
-            </googleJavaFormat>
-            <importOrder>
-              <wildcardsLast>true</wildcardsLast>
-              <order>\#de.fraunhofer.iosb,java,\#</order>
-            </importOrder>
-          </java>
-          <pom>
-            <sortPom>
-              <expandEmptyElements>false</expandEmptyElements>
-              <indentAttribute>schemaLocation</indentAttribute>
-              <predefinedSortOrder>recommended_2008_06</predefinedSortOrder>
-              <sortDependencyExclusions/>
-              <sortDependencyManagement/>
-            </sortPom>
-          </pom>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>validate</phase>
           </execution>
         </executions>
       </plugin>
