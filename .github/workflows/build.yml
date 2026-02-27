@@ -35,6 +35,7 @@ jobs:
         id: filter
         if: github.ref_type != 'tag'
         with:
+          base: ${{ github.ref }}
           filters: |
             bom:
               - 'bom/**'
