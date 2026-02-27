@@ -43,6 +43,9 @@ cd extensions
 mvn spotless:apply
 
 mvn clean package
+
+# Build only single module, e.g. rest-adapter-extension
+mvn clean package -pl rest-adapter-extension
 ```
 
 ### Framework
