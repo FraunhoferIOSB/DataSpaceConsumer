@@ -1,4 +1,4 @@
-package de.fraunhofer.iosb.ilt.dataspace_consumer.console_adapter_extension;
+package de.fraunhofer.iosb.ilt.dataspace_consumer.file_adapter_extension;
 
 import java.io.IOException;
 import java.nio.file.Files;
