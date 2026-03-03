@@ -2,8 +2,8 @@ name: Build
 
 on:
   push:
-    branches: [ "main" ]
-    paths-ignore: [ "**/*.md" ]
+    branches: ["main"]
+    paths-ignore: ["**/*.md"]
     tags:
       - "v*.*.*"
       - "parent-v*.*.*"
@@ -12,8 +12,8 @@ on:
       - "framework-v*.*.*"
       - "extensions-v*.*.*"
   pull_request:
-    branches: [ "main" ]
-    paths-ignore: [ "**/*.md" ]
+    branches: ["main"]
+    paths-ignore: ["**/*.md"]
   workflow_dispatch:
 
 permissions:
@@ -26,18 +26,19 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      parent: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/parent-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.parent == 'true') }}
-      bom: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/bom-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.bom == 'true') }}
-      api: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/api-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.api == 'true') }}
-      framework: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.framework == 'true') }}
-      extensions: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/extensions-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.extensions == 'true') }}
+      isTag: ${{ (github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')) && 'true' || 'false' }}
+      parent: ${{ (startsWith(github.ref, 'refs/tags/parent-v') || (github.ref_type != 'tag' && steps.filter.outputs.parent == 'true')) && 'true' || 'false' }}
+      bom: ${{ (github.ref_type != 'tag' && steps.filter.outputs.bom == 'true') && 'true' || 'false' }}
+      api: ${{ (github.ref_type != 'tag' && steps.filter.outputs.api == 'true') && 'true' || 'false' }}
+      framework: ${{ (github.ref_type != 'tag' && steps.filter.outputs.framework == 'true') && 'true' || 'false' }}
+      extensions: ${{ (github.ref_type != 'tag' && steps.filter.outputs.extensions == 'true') && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v6
       - uses: dorny/paths-filter@v3
         id: filter
         if: github.ref_type != 'tag'
         with:
-          base: ${{ github.ref }}
+          base: ${{ github.base_ref || github.ref }}
           filters: |
             parent:
               - 'pom.xml'
@@ -64,146 +65,63 @@ jobs:
 
   build-parent:
     needs: changes
-    if: ${{ needs.changes.outputs.parent == 'true' }}
+    if: ${{ needs.changes.outputs.isTag == 'true' || needs.changes.outputs.parent == 'true' }}
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
-      security-events: write
       actions: read
-      packages: read
+      packages: write
     with:
       pom-file: "pom.xml"
-      build-artifact-name: parent-artifact
-      build-artifact-path: parent/target/
-      install-to-local-repo: true
-
-  publish-parent:
-    needs: build-parent
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/parent-v')))
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      - name: Download build artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: parent-artifact
-          path: parent/target/
-      - name: Publish to GitHub Packages
-        run: mvn -f parent/pom.xml deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # deploy only on main or tag, otherwise install
+      maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
+      maven-args: "-N"
 
   build-bom:
     needs: [changes, build-parent]
     if: |
-      always() &&
-      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
-      (needs.changes.outputs.bom == 'true' || needs.changes.outputs.parent == 'true')
+      always() && !failure() && !cancelled() &&
+      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.parent == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
-      security-events: write
       actions: read
-      packages: read
+      packages: write
     with:
       pom-file: "bom/pom.xml"
-      build-artifact-name: bom-artifact
-      build-artifact-path: bom/target/
-      install-to-local-repo: true
-
-  publish-bom:
-    needs: build-bom
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/bom-v')))
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      - name: Download build artifacts
-        uses: actions/download-artifact@v7
-        with:
-          name: bom-artifact
-          path: bom/target/
-      - name: Publish to GitHub Packages
-        run: mvn -f bom/pom.xml deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # deploy only on main or tag, otherwise install
+      maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
 
   build-api:
     needs: [changes, build-parent, build-bom]
     if: |
-      always() &&
-      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
-      (needs.build-bom.result == 'success' || needs.build-bom.result == 'skipped') &&
-      (needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
+      always() && !failure() && !cancelled() &&
+      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
-      security-events: write
       actions: read
-      packages: read
+      packages: write
     with:
       pom-file: "api/pom.xml"
-      build-artifact-name: api-artifact
-      build-artifact-path: api/target/
-      install-to-local-repo: true
-      download-dependencies-artifacts: true
-
-  publish-api:
-    needs: build-api
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/api-v')))
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-      - name: Publish to GitHub Packages
-        run: mvn -f api/pom.xml deploy -DskipTests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # deploy only on main or tag, otherwise install
+      maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
 
   build-framework:
-    needs: [changes, build-parent, build-api, build-bom]
+    needs: [changes, build-parent, build-bom, build-api]
     if: |
-      always() &&
-      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
-      (needs.build-bom.result == 'success' || needs.build-bom.result == 'skipped') &&
-      (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
-      (needs.changes.outputs.framework == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
+      always() && !failure() && !cancelled() &&
+      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.framework == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
-      security-events: write
       actions: read
-      packages: read
+      packages: write
     with:
       pom-file: "framework/pom.xml"
+      maven-phase: "package"
       build-artifact-name: framework-artifact
       build-artifact-path: framework/target/
-      download-dependencies-artifacts: true
 
   docker-framework:
     needs: build-framework
@@ -220,70 +138,33 @@ jobs:
       image-name: ${{ github.repository }}-framework
 
   build-extensions:
-    needs: [changes, build-parent, build-api, build-bom]
+    needs: [changes, build-parent, build-bom, build-api]
     if: |
-      always() &&
-      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
-      (needs.build-bom.result == 'success' || needs.build-bom.result == 'skipped') &&
-      (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
-      (needs.changes.outputs.extensions == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
+      always() && !failure() && !cancelled() &&
+      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.extensions == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
-      security-events: write
       actions: read
-      packages: read
+      packages: write
     with:
       pom-file: "extensions/pom.xml"
+      maven-phase: "package"
       build-artifact-name: extensions-artifact
       build-artifact-path: extensions/**/target/
-      download-dependencies-artifacts: true
 
   release:
-    needs: [build-parent, build-bom, build-api, build-framework, docker-framework, build-extensions]
-    if: |
-      always() &&
-      github.ref_type == 'tag' &&
-      (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/parent-v') || startsWith(github.ref, 'refs/tags/framework-v') || startsWith(github.ref, 'refs/tags/extensions-v') || startsWith(github.ref, 'refs/tags/bom-v') || startsWith(github.ref, 'refs/tags/api-v')) &&
-      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
-      (needs.build-framework.result == 'success' || needs.build-framework.result == 'skipped') &&
-      (needs.docker-framework.result == 'success' || needs.docker-framework.result == 'skipped') &&
-      (needs.build-extensions.result == 'success' || needs.build-extensions.result == 'skipped')
-    runs-on: ubuntu-latest
+    needs:
+      [
+        changes,
+        build-parent,
+        build-bom,
+        build-api,
+        build-framework,
+        docker-framework,
+        build-extensions,
+      ]
+    if: needs.changes.outputs.isTag == 'true'
+    uses: ./.github/workflows/release.yml
     permissions:
       contents: write
-    outputs:
-      isFrameworkRelease: ${{ needs.build-framework.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v')) }}
-      isExtensionsRelease: ${{ needs.build-extensions.result == 'success' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/extensions-v')) }}
-    steps:
-      - uses: actions/checkout@v6
-      - name: Download framework artifacts
-        if: ${{ needs.release.outputs.isFrameworkRelease == 'true' }}
-        uses: actions/download-artifact@v7
-        with:
-          name: framework-artifact
-          path: framework-artifacts/
-      - name: Download extensions artifacts
-        if: ${{ needs.release.outputs.isExtensionsRelease == 'true' }}
-        uses: actions/download-artifact@v7
-        with:
-          name: extensions-artifact
-          path: extensions-artifacts/
-      - name: Upload framework JAR to release
-        if: ${{ needs.release.outputs.isFrameworkRelease == 'true' }}
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: framework-artifacts/*.jar
-          file_glob: true
-          tag: ${{ github.ref }}
-          overwrite: true
-      - name: Upload extension JARs to release
-        if: ${{ needs.release.outputs.isExtensionsRelease == 'true' }}
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: extensions-artifacts/**/*-all.jar
-          file_glob: true
-          tag: ${{ github.ref }}
-          overwrite: true
