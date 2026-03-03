@@ -151,7 +151,7 @@ jobs:
       always() &&
       (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
       (needs.build-bom.result == 'success' || needs.build-bom.result == 'skipped') &&
-      (needs.changes.outputs.api == 'true' || needs.changes.outputs.parent == 'true')
+      (needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -186,12 +186,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-framework:
-    needs: [changes, build-parent, build-api]
+    needs: [changes, build-parent, build-api, build-bom]
     if: |
       always() &&
       (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
+      (needs.build-bom.result == 'success' || needs.build-bom.result == 'skipped') &&
       (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
-      (needs.changes.outputs.framework == 'true' || needs.changes.outputs.parent == 'true')
+      (needs.changes.outputs.framework == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -219,12 +220,13 @@ jobs:
       image-name: ${{ github.repository }}-framework
 
   build-extensions:
-    needs: [changes, build-parent, build-api]
+    needs: [changes, build-parent, build-api, build-bom]
     if: |
       always() &&
       (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
+      (needs.build-bom.result == 'success' || needs.build-bom.result == 'skipped') &&
       (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
-      (needs.changes.outputs.extensions == 'true' || needs.changes.outputs.parent == 'true')
+      (needs.changes.outputs.extensions == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
