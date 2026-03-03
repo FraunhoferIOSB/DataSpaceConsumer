@@ -87,29 +87,3 @@ mvn versions:commit
 git add . && git commit -m "Bump version to 1.0.1-SNAPSHOT"
 git push
 ```
-
-## Module-Specific Release Examples
-
-```bash
-# Release bom
-mvn versions:set -DnewVersion=1.0.0 -pl bom
-git tag bom-v1.0.0 && git push origin bom-v1.0.0
-
-# Release api
-mvn versions:set -DnewVersion=2.1.5 -pl api
-git tag api-v2.1.5 && git push origin api-v2.1.5
-
-# Release framework
-mvn versions:set -DnewVersion=3.0.2 -pl framework
-git tag framework-v3.0.2 && git push origin framework-v3.0.2
-
-# Release extensions
-mvn versions:set -DnewVersion=1.2.0 -pl extensions
-git tag extensions-v1.2.0 && git push origin extensions-v1.2.0
-```
-
-## Notes
-
-- The release is published automatically by the GitHub Actions pipeline based on the tag pattern
-- Module-specific tags (e.g., `api-v2.1.5`) trigger only that module's publish job
-- Generic tags (e.g., `v1.0.0`) trigger all module releases
