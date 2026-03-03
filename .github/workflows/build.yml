@@ -6,6 +6,7 @@ on:
     paths-ignore: [ "**/*.md" ]
     tags:
       - "v*.*.*"
+      - "parent-v*.*.*"
       - "bom-v*.*.*"
       - "api-v*.*.*"
       - "framework-v*.*.*"
@@ -25,6 +26,7 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
+      parent: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/parent-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.parent == 'true') }}
       bom: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/bom-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.bom == 'true') }}
       api: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/api-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.api == 'true') }}
       framework: ${{ (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v'))) || (github.ref_type != 'tag' && steps.filter.outputs.framework == 'true') }}
@@ -35,7 +37,13 @@ jobs:
         id: filter
         if: github.ref_type != 'tag'
         with:
+          base: ${{ github.ref }}
           filters: |
+            parent:
+              - 'pom.xml'
+              - 'license-header'
+              - '.github/workflows/build.yml'
+              - '.github/workflows/maven.yml'
             bom:
               - 'bom/**'
               - '.github/workflows/build.yml'
@@ -54,15 +62,58 @@ jobs:
               - '.github/workflows/build.yml'
               - '.github/workflows/maven.yml'
 
-  build-bom:
+  build-parent:
     needs: changes
-    if: ${{ needs.changes.outputs.bom == 'true' }}
+    if: ${{ needs.changes.outputs.parent == 'true' }}
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
       security-events: write
       actions: read
-      packages: read   
+      packages: read
+    with:
+      pom-file: "pom.xml"
+      build-artifact-name: parent-artifact
+      build-artifact-path: parent/target/
+      install-to-local-repo: true
+
+  publish-parent:
+    needs: build-parent
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.ref_type == 'tag' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/parent-v')))
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Download build artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: parent-artifact
+          path: parent/target/
+      - name: Publish to GitHub Packages
+        run: mvn -f parent/pom.xml deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-bom:
+    needs: [changes, build-parent]
+    if: |
+      always() &&
+      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
+      (needs.changes.outputs.bom == 'true' || needs.changes.outputs.parent == 'true')
+    uses: ./.github/workflows/maven.yml
+    permissions:
+      contents: write
+      security-events: write
+      actions: read
+      packages: read
     with:
       pom-file: "bom/pom.xml"
       build-artifact-name: bom-artifact
@@ -95,11 +146,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-api:
-    needs: [changes, build-bom]
+    needs: [changes, build-parent, build-bom]
     if: |
       always() &&
+      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
       (needs.build-bom.result == 'success' || needs.build-bom.result == 'skipped') &&
-      needs.changes.outputs.api == 'true'
+      (needs.changes.outputs.api == 'true' || needs.changes.outputs.parent == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -134,11 +186,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-framework:
-    needs: [changes, build-api]
+    needs: [changes, build-parent, build-api]
     if: |
       always() &&
+      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
       (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
-      needs.changes.outputs.framework == 'true'
+      (needs.changes.outputs.framework == 'true' || needs.changes.outputs.parent == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -166,11 +219,12 @@ jobs:
       image-name: ${{ github.repository }}-framework
 
   build-extensions:
-    needs: [changes, build-api]
+    needs: [changes, build-parent, build-api]
     if: |
       always() &&
+      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
       (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
-      needs.changes.outputs.extensions == 'true'
+      (needs.changes.outputs.extensions == 'true' || needs.changes.outputs.parent == 'true')
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -184,11 +238,12 @@ jobs:
       download-dependencies-artifacts: true
 
   release:
-    needs: [build-bom, build-api, build-framework, docker-framework, build-extensions]
+    needs: [build-parent, build-bom, build-api, build-framework, docker-framework, build-extensions]
     if: |
       always() &&
       github.ref_type == 'tag' &&
-      (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/framework-v') || startsWith(github.ref, 'refs/tags/extensions-v') || startsWith(github.ref, 'refs/tags/bom-v') || startsWith(github.ref, 'refs/tags/api-v')) &&
+      (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/parent-v') || startsWith(github.ref, 'refs/tags/framework-v') || startsWith(github.ref, 'refs/tags/extensions-v') || startsWith(github.ref, 'refs/tags/bom-v') || startsWith(github.ref, 'refs/tags/api-v')) &&
+      (needs.build-parent.result == 'success' || needs.build-parent.result == 'skipped') &&
       (needs.build-framework.result == 'success' || needs.build-framework.result == 'skipped') &&
       (needs.docker-framework.result == 'success' || needs.docker-framework.result == 'skipped') &&
       (needs.build-extensions.result == 'success' || needs.build-extensions.result == 'skipped')
