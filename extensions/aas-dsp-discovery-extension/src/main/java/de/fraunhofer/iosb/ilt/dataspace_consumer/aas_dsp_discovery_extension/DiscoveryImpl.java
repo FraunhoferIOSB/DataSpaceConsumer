@@ -64,13 +64,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
     private static final Pattern SUBPROTOCOL_PATTERN =
             Pattern.compile("assetId=([^;]+);dsp_endpoint=([^;]+)");
 
-    /**
-     * has a side effect on the endpointToHrefMap
-     *
-     * @param endpoints
-     * @param result
-     * @return
-     */
+            
     private void extractFromEndpoints(JsonNode endpoints, List<ResultItem> result) {
 
         if (!endpoints.isArray()) {
