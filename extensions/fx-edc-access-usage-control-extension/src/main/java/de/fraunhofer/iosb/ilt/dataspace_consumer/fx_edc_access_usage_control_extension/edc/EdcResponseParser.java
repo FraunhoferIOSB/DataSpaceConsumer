@@ -9,17 +9,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.InitData;
-import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edc.EdcResponseParser;
 
 public class EdcResponseParser {
 
     private static final Logger LOGGER = Logger.getLogger(EdcResponseParser.class.getName());
     private final ObjectMapper mapper;
 
-    public EdcResponseParser(){
+    public EdcResponseParser() {
         mapper = new ObjectMapper();
     }
 
@@ -33,16 +31,12 @@ public class EdcResponseParser {
         T get() throws JsonProcessingException;
     }
 
-    public <T> T parse(String responseBodyString, TypeReference<T> type, String requestName){
-        return parseJson(
-                        () -> mapper.readValue(responseBodyString, type),
-                        requestName);
+    public <T> T parse(String responseBodyString, TypeReference<T> type, String requestName) {
+        return parseJson(() -> mapper.readValue(responseBodyString, type), requestName);
     }
 
-    public <T> T parse(String responseBodyString, Class<T> type, String requestName){
-        return parseJson(
-                        () -> mapper.readValue(responseBodyString, type),
-                        requestName);
+    public <T> T parse(String responseBodyString, Class<T> type, String requestName) {
+        return parseJson(() -> mapper.readValue(responseBodyString, type), requestName);
     }
 
     private static <T> T parseJson(JsonSupplier<T> parsingOperation, String requestName)
@@ -58,8 +52,8 @@ public class EdcResponseParser {
         }
     }
 
-    public InitData policyFromCatalogResponse(String responseBodyString){
-        
+    public InitData policyFromCatalogResponse(String responseBodyString) {
+
         JsonNode root = parseJson(() -> mapper.readTree(responseBodyString), "policy parsing");
 
         JsonNode participantId = root.get("participantId");
@@ -67,7 +61,7 @@ public class EdcResponseParser {
         for (JsonNode element : root.get("dataset")) {
 
             JsonNode idNode = element.get("@id");
-        
+
             JsonNode id2Node = element.get("id");
 
             if (idNode != null && idNode.asText().equals(id2Node.asText())) {
@@ -89,8 +83,6 @@ public class EdcResponseParser {
             }
         }
 
-         throw new DSCExecuteException("No applicable policy found");
+        throw new DSCExecuteException("No applicable policy found");
     }
-
-
 }

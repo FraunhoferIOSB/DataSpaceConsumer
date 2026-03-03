@@ -4,12 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Expiry;
+
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.SubProtocolType;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPAccessAndUsageControl;
@@ -19,7 +16,6 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteExcepti
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edc.EdcClient;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edc.dto.AvailableEdrDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edc.dto.EdrDTO;
-
 import org.pf4j.Extension;
 
 @Extension
@@ -36,15 +32,12 @@ public class AccessUsageControlImpl
         implements DSPAccessAndUsageControl<AuthorizationContext>, Configurable {
 
     private static final Logger LOGGER = Logger.getLogger(AccessUsageControlImpl.class.getName());
-    
+
     private Caching cache = Caching.getInstance();
 
     private EdcClient client;
 
-
-    public AccessUsageControlImpl() {
-        
-    }
+    public AccessUsageControlImpl() {}
 
     /**
      * Returns a list with supported subprotocol types.
@@ -60,7 +53,6 @@ public class AccessUsageControlImpl
         return types;
     }
 
-    
     /**
      * Initiate access negotiation for the provided DSP access request.
      *
@@ -103,9 +95,7 @@ public class AccessUsageControlImpl
     public boolean isNegotiationFinalized(AuthorizationContext context) {
 
         return client.isNegotiationFinalized(context);
-        
     }
-
 
     /**
      * Obtain an AccessResponse (endpoint + token) for the given AuthorizationContext.
@@ -142,8 +132,6 @@ public class AccessUsageControlImpl
 
         return new AccessResponse(dto.endpoint(), dto.authorization(), context.assetId());
     }
-
-    
 
     /**
      * Configure the EDC client parameters used by this implementation.

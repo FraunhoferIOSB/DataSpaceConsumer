@@ -1,7 +1,5 @@
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edc;
 
-
-
 public final class EdcRequestTemplates {
 
     private EdcRequestTemplates() {}
@@ -11,7 +9,6 @@ public final class EdcRequestTemplates {
             String counterPartyId,
             String operandLeft,
             String operandRight) {
-
 
         return """
         {
@@ -34,38 +31,31 @@ public final class EdcRequestTemplates {
             ]
           }
         }
-        """.formatted(
-                counterPartyAddress,
-                counterPartyId,
-                operandLeft,
-                operandRight
-        );
+        """
+                .formatted(counterPartyAddress, counterPartyId, operandLeft, operandRight);
     }
 
-
-    public static String contractNegotiation(
-        String counterPartyAddress,
-        String policyJson
-) {
-    return """
-    {
-      "@context": [
-        "https://w3id.org/tractusx/auth/v1.0.0",
-        "https://w3id.org/catenax/2025/9/policy/context.jsonld",
-        "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
-        "https://w3id.org/dspace/2025/1/context.jsonld",
-        "https://w3id.org/edc/dspace/v0.0.1",
-        { "fx-policy": "https://w3id.org/factoryx/policy/v1.0/" }
-      ],
-      "@type": "https://w3id.org/edc/v0.0.1/ns/ContractRequest",
-      "https://w3id.org/edc/v0.0.1/ns/counterPartyAddress": "%s",
-      "https://w3id.org/edc/v0.0.1/ns/protocol": "dataspace-protocol-http:2025-1",
-      "https://w3id.org/edc/v0.0.1/ns/policy": %s
+    public static String contractNegotiation(String counterPartyAddress, String policyJson) {
+        return """
+        {
+          "@context": [
+            "https://w3id.org/tractusx/auth/v1.0.0",
+            "https://w3id.org/catenax/2025/9/policy/context.jsonld",
+            "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
+            "https://w3id.org/dspace/2025/1/context.jsonld",
+            "https://w3id.org/edc/dspace/v0.0.1",
+            { "fx-policy": "https://w3id.org/factoryx/policy/v1.0/" }
+          ],
+          "@type": "https://w3id.org/edc/v0.0.1/ns/ContractRequest",
+          "https://w3id.org/edc/v0.0.1/ns/counterPartyAddress": "%s",
+          "https://w3id.org/edc/v0.0.1/ns/protocol": "dataspace-protocol-http:2025-1",
+          "https://w3id.org/edc/v0.0.1/ns/policy": %s
+        }
+        """
+                .formatted(counterPartyAddress, policyJson);
     }
-    """.formatted(counterPartyAddress, policyJson);
-}
 
-public static String availableEdrQuery(String assetId) {
+    public static String availableEdrQuery(String assetId) {
         return """
         {
           "@context": {
@@ -82,7 +72,7 @@ public static String availableEdrQuery(String assetId) {
             }
           ]
         }
-        """.formatted(assetId);
+        """
+                .formatted(assetId);
     }
-
 }

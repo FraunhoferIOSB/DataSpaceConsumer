@@ -1,11 +1,8 @@
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension;
 
+public class LoggingUtil {
 
-public class LoggingUtil{
-
-    private LoggingUtil(){
-        
-    }
+    private LoggingUtil() {}
 
     /**
      * Masks the central part of a token string leaving the specified number of characters visible

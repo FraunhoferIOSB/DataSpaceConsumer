@@ -5,20 +5,17 @@ import java.util.concurrent.TimeUnit;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
-
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edc.dto.EdrDTO;
 
 public class Caching {
 
-    private Caching(){
-
-    }
+    private Caching() {}
 
     private static Caching instance;
-    
+
     public static Caching getInstance() {
-        if(instance == null){
+        if (instance == null) {
             instance = new Caching();
         }
         return instance;
@@ -27,8 +24,6 @@ public class Caching {
     private Cache<DSPRequest, AuthorizationContext> negotiationCache =
             Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).build();
 
-
-    
     private Cache<AuthorizationContext, EdrDTO> tokenCache =
             Caffeine.newBuilder()
                     .expireAfter(
@@ -67,14 +62,11 @@ public class Caching {
                             })
                     .build();
 
-
-
-    public EdrDTO getToken(AuthorizationContext context){
+    public EdrDTO getToken(AuthorizationContext context) {
         return tokenCache.getIfPresent(context);
-    
     }
 
-    public void putToken(AuthorizationContext context, EdrDTO token){
+    public void putToken(AuthorizationContext context, EdrDTO token) {
         tokenCache.put(context, token);
     }
 
@@ -82,8 +74,7 @@ public class Caching {
         return negotiationCache.getIfPresent(accessRequest);
     }
 
-    public void putNegotiation(DSPRequest accessRequest, AuthorizationContext context){
+    public void putNegotiation(DSPRequest accessRequest, AuthorizationContext context) {
         negotiationCache.put(accessRequest, context);
     }
-
 }

@@ -8,7 +8,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPFilter;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
@@ -42,7 +41,8 @@ public class EdcClient {
 
     private EdcResponseParser parser;
 
-    public EdcClient(String baseURL, String apiKey, String counterPartyId, String counterPartyAddress){
+    public EdcClient(
+            String baseURL, String apiKey, String counterPartyId, String counterPartyAddress) {
         this.apiKey = apiKey;
         this.baseURL = baseURL;
         this.counterPartyAddress = counterPartyAddress;
@@ -84,8 +84,6 @@ public class EdcClient {
         }
     }
 
-    
-
     private Request getRequest(String endpoint, String method, String bodyString) {
         Request.Builder builder =
                 new Request.Builder()
@@ -112,13 +110,13 @@ public class EdcClient {
 
         DSPRequest dspRequest = (DSPRequest) filterRequest;
         DSPFilter filter = dspRequest.getFilters();
-        String bodyString = EdcRequestTemplates.catalogRequest(counterPartyAddress, counterPartyId, filter.key(), filter.value());
-          
+        String bodyString =
+                EdcRequestTemplates.catalogRequest(
+                        counterPartyAddress, counterPartyId, filter.key(), filter.value());
 
         String loggingName = "policy";
         LOGGER.log(Level.FINE, LOG_REQUEST_MSG_FORMAT, new Object[] {loggingName, bodyString});
-        Request request =
-                getRequest(EdcEndpoints.catalogEndpoint(baseURL), "POST", bodyString);
+        Request request = getRequest(EdcEndpoints.catalogEndpoint(baseURL), "POST", bodyString);
 
         Response response = getResponse(request, loggingName);
         String responseBodyString = getResponseBodyString(response, loggingName);
@@ -128,13 +126,12 @@ public class EdcClient {
                 new Object[] {loggingName, responseBodyString});
 
         return parser.policyFromCatalogResponse(responseBodyString);
-       
     }
 
     public String initiateNegotiation(InitData initData) throws DSCExecuteException {
 
-        String bodyString = EdcRequestTemplates.contractNegotiation(counterPartyAddress, initData.policy());
-            
+        String bodyString =
+                EdcRequestTemplates.contractNegotiation(counterPartyAddress, initData.policy());
 
         String loggingName = "negotiation";
         LOGGER.log(Level.FINE, LOG_REQUEST_MSG_FORMAT, new Object[] {loggingName, bodyString});
@@ -147,8 +144,7 @@ public class EdcClient {
                 new Object[] {loggingName, responseBodyString});
 
         InitNegotiationDTO initNegotiationDTO =
-                parser.parse(responseBodyString, InitNegotiationDTO.class,
-                        "policy");
+                parser.parse(responseBodyString, InitNegotiationDTO.class, "policy");
 
         LOGGER.log(Level.FINE, "negotiation id: {0}", initNegotiationDTO.id());
 
@@ -157,7 +153,6 @@ public class EdcClient {
 
     public List<AvailableEdrDTO> getAvailableEDRResponse(String assetId) {
         String bodyString = EdcRequestTemplates.availableEdrQuery(assetId);
-               
 
         String loggingName = "available EDRs";
         LOGGER.log(Level.FINE, LOG_REQUEST_MSG_FORMAT, new Object[] {loggingName, bodyString});
@@ -171,18 +166,14 @@ public class EdcClient {
                 new Object[] {loggingName, responseBodyString});
 
         return parser.parse(
-                                responseBodyString, new TypeReference<List<AvailableEdrDTO>>() {},
-                loggingName);
+                responseBodyString, new TypeReference<List<AvailableEdrDTO>>() {}, loggingName);
     }
 
     public EdrDTO getEDRTokenResponse(String transferProcessId) {
 
         String loggingName = "token";
         Request request =
-                getRequest(
-                        EdcEndpoints.tokenEndpoint(baseURL, transferProcessId),
-                        "GET",
-                        null);
+                getRequest(EdcEndpoints.tokenEndpoint(baseURL, transferProcessId), "GET", null);
         Response response = getResponse(request, loggingName);
         String responseBodyString = getResponseBodyString(response, loggingName);
         LOGGER.log(
@@ -202,8 +193,7 @@ public class EdcClient {
         LOGGER.log(Level.FINE, "form status request");
         Request request =
                 getRequest(
-                        EdcEndpoints.negotiationStatusEndpoint(
-                                baseURL, context.negotiationId()),
+                        EdcEndpoints.negotiationStatusEndpoint(baseURL, context.negotiationId()),
                         "GET",
                         null);
         LOGGER.log(Level.FINE, "send status request");
@@ -214,11 +204,9 @@ public class EdcClient {
                 LOG_RESPONSE_MSG_FORMAT,
                 new Object[] {loggingName, responseBodyString});
         NegotiationStateDTO negotiationStateDTO =
-                parser.parse(responseBodyString, NegotiationStateDTO.class,
-                        loggingName);
+                parser.parse(responseBodyString, NegotiationStateDTO.class, loggingName);
         LOGGER.log(Level.FINE, "state: {0}", negotiationStateDTO.state());
 
         return negotiationStateDTO.state().equals("FINALIZED");
     }
-
 }
