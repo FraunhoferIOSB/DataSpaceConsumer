@@ -16,8 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Extension
-
-
 public class FileAdapter implements Adapter, Configurable {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileAdapter.class);
