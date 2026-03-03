@@ -16,18 +16,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Extension
-/**
- * Simple adapter implementation that logs incoming converter payloads to the application logger
- * (console). This adapter is intended for debugging and inspection purposes: it prints the payload
- * type and the UTF-8 decoded payload content at INFO level.
- */
+
+
 public class FileAdapter implements Adapter, Configurable {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileAdapter.class);
     private String folderPath;
 
     /**
-     * Creates a new ConsoleAdapter instance.
+     * Creates a new FileAdapter instance.
      *
      * <p>No special initialization is required for this adapter.
      */
@@ -64,11 +61,11 @@ public class FileAdapter implements Adapter, Configurable {
     }
 
     /**
-     * Logs the payload contained in the given ConverterResponse to the console.
+     * Writes the payload contained in the given ConverterResponse to a file.
      *
      * <p>If the provided request or its payload is null, a warning is logged and the method returns
      * without throwing an exception. Otherwise the payload type and the UTF-8 decoded payload
-     * contents are logged at INFO level.
+     * contents are written to a file in the specified folder (folderPath property).
      *
      * @param request the ConverterResponse containing the payload to log
      * @throws DSCExecuteException declared by the Adapter interface; this implementation does not
