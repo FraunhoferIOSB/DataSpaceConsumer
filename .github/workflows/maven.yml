@@ -77,7 +77,7 @@ jobs:
           maven-args: -f ${{ inputs.pom-file }}
 
       - name: Upload maven build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ inputs.build-artifact-name && inputs.build-artifact-path }}
         with:
           name: ${{ inputs.build-artifact-name }}
