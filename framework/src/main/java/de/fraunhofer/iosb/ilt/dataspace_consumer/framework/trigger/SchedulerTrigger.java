@@ -23,6 +23,7 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.TriggerConfig;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,32 @@ public class SchedulerTrigger extends Trigger {
             fallback.initialize();
             this.taskScheduler = fallback;
         }
+    }
+
+    /**
+     * * Initialize all schedulers on application startup. This method is automatically called after
+     * bean creation.
+     */
+    @PostConstruct
+    public void init() {
+        LOGGER.info(
+                "SchedulerTrigger: Initializing scheduled tasks for all configured MX-Ports...");
+
+        for (DSCConfig config : mxPortService.getMxPorts()) {
+            try {
+                schedule(config.getName());
+            } catch (Exception e) {
+                LOGGER.error(
+                        "SchedulerTrigger: Failed to schedule MX-Port '{}': {}",
+                        config.getName(),
+                        e.getMessage(),
+                        e);
+            }
+        }
+
+        LOGGER.info(
+                "SchedulerTrigger: Initialization complete. {} task(s) scheduled.",
+                scheduledTasks.size());
     }
 
     /**
