@@ -17,7 +17,6 @@ Open the `pom.xml` and replace the following placeholders:
 - **`<name>`**: Replace `your-project-name` with a descriptive name (e.g., `My Custom Adapter Plugin`)
 - **`<plugin.id>`**: Replace `your-plugin-id/your-artifact-id` with a unique plugin identifier, could be the artifactid (e.g., `com.example/my-custom-adapter`)
 - **`<plugin.provider>`**: Replace `your-organization` with your organization name (e.g., `Example Corp`)
-- **`<plugin.class>`**: Leave empty if you don't need a custom plugin class; otherwise specify the fully qualified class name of your `org.pf4j.Plugin` implementation
 
 
 ## 2. Implement an Extension Interface

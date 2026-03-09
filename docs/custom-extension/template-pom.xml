@@ -22,10 +22,8 @@
     <dataspace_consumer.api.version>0.0.1</dataspace_consumer.api.version>
 
     <plugin.id>your-plugin-id/your-artifact-id</plugin.id>
-    <plugin.class />
     <plugin.version>${revision}</plugin.version>
     <plugin.provider>your-organization</plugin.provider>
-    <plugin.dependencies />
   </properties>
 
   <repositories>
@@ -93,8 +91,6 @@
               <Plugin-Id>${plugin.id}</Plugin-Id>
               <Plugin-Version>${plugin.version}</Plugin-Version>
               <Plugin-Provider>${plugin.provider}</Plugin-Provider>
-              <Plugin-Class>${plugin.class}</Plugin-Class>
-              <Plugin-Dependencies>${plugin.dependencies}</Plugin-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>

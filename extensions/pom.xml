@@ -38,10 +38,8 @@
 
     <!-- Override below properties in each plugin's pom.xml -->
     <plugin.id/>
-    <plugin.class/>
     <plugin.version>${revision}</plugin.version>
     <plugin.provider>Fraunhofer IOSB</plugin.provider>
-    <plugin.dependencies/>
   </properties>
 
   <dependencyManagement>
@@ -145,8 +143,6 @@
               <Plugin-Id>${plugin.id}</Plugin-Id>
               <Plugin-Version>${plugin.version}</Plugin-Version>
               <Plugin-Provider>${plugin.provider}</Plugin-Provider>
-              <Plugin-Class>${plugin.class}</Plugin-Class>
-              <Plugin-Dependencies>${plugin.dependencies}</Plugin-Dependencies>
             </manifestEntries>
           </archive>
         </configuration>
