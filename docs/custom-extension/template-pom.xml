@@ -18,6 +18,8 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+    <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
+
     <dataspace_consumer.bom.version>0.0.1</dataspace_consumer.bom.version>
     <dataspace_consumer.api.version>0.0.1</dataspace_consumer.api.version>
 
@@ -74,7 +76,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>${maven-assembly-plugin.version}</version>
         <configuration>
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>

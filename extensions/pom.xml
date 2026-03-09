@@ -36,6 +36,8 @@
     <faaast.client.version>1.0.0</faaast.client.version>
     <digitaltwin.aas4j.version>2.0.1</digitaltwin.aas4j.version>
 
+    <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
+
     <!-- Override below properties in each plugin's pom.xml -->
     <plugin.id/>
     <plugin.version>${revision}</plugin.version>
@@ -126,7 +128,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>${maven-assembly-plugin.version}</version>
         <configuration>
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
