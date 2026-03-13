@@ -55,7 +55,7 @@ First copy the extensions jars to the framework extensions directory by executin
 ```bash
 # Windows
 cd scripts 
-copy-jars.ps1
+.\copy-jars.ps1
 
 ## Linux
 bash ./scripts/copy-jars.sh
