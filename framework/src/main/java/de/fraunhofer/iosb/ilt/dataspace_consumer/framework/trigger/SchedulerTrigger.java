@@ -135,7 +135,7 @@ public class SchedulerTrigger extends Trigger {
                         LOGGER.debug(
                                 "SchedulerTrigger: Triggering MX-Port '{}' via scheduler.",
                                 mxPortName);
-                        execute(mxPortName);
+                        execute(mxPortName, portConfig.getTimeout());
                     } catch (Exception e) {
                         LOGGER.error(
                                 "SchedulerTrigger: Error while executing MX-Port '{}'",
