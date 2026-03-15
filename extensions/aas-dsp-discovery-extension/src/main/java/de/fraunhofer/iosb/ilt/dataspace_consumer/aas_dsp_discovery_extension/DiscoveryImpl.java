@@ -21,8 +21,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,10 +55,12 @@ import org.pf4j.Extension;
  * DSP endpoints and hrefs from the catalogue response and converts them to the appropriate
  * AccessRequest and GateRequest objects used by the framework.
  */
-public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
+public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurable {
 
     private final ObjectMapper mapper;
     private final OkHttpClient client;
+
+    private static final Logger LOGGER = Logger.getLogger(DiscoveryImpl.class.getName());
 
     private String baseURL;
 
@@ -174,7 +179,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
      * @throws RuntimeException if the HTTP request fails or the response cannot be parsed
      */
     @Override
-    public JsonNode discover(AccessResponse accessResponse) {
+    public Optional<JsonNode> discover(AccessResponse accessResponse) {
 
         Request request =
                 new Request.Builder()
@@ -194,10 +199,15 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
                 throw new IOException("Empty response body");
             }
 
-            return mapper.readTree(body.string());
+            return Optional.of(mapper.readTree(body.string()));
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to fetch or parse API response", e);
+
+            LOGGER.log(
+                    Level.WARNING,
+                    "Failed to fetch or parse API response from {0}",
+                    new Object[] {accessResponse.url()});
+            return Optional.empty();
         }
     }
 
@@ -214,12 +224,15 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
      *     discovered asset
      */
     @Override
-    public List<AccessRequest> getGateAccessRequests(JsonNode discoveredInfos) {
+    public List<AccessRequest> getGateAccessRequests(Optional<JsonNode> discoveredInfos) {
 
+        if (discoveredInfos.isEmpty()) {
+            return new ArrayList<>();
+        }
         // we only need one access request per assetId
         Set<String> includedAssetIDs = new HashSet<>();
 
-        return getResultItems(discoveredInfos).stream()
+        return getResultItems(discoveredInfos.get()).stream()
                 .filter(x -> includedAssetIDs.add(x.assetId()))
                 .map(
                         x -> {
@@ -247,7 +260,11 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
      */
     @Override
     public List<GateRequest> convertToGateRequests(
-            List<AccessResponse> accessResponses, JsonNode discoveredInfos) {
+            List<AccessResponse> accessResponses, Optional<JsonNode> discoveredInfos) {
+
+        if (discoveredInfos.isEmpty()) {
+            return new ArrayList<>();
+        }
 
         // map assetId to token:
         HashMap<String, String> tokenMap = new HashMap<>();
@@ -255,7 +272,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
             tokenMap.put((String) response.identifier(), response.token());
         }
 
-        return getResultItems(discoveredInfos).stream()
+        return getResultItems(discoveredInfos.get()).stream()
                 .map(
                         x -> {
                             return new GateRequest(x.href(), tokenMap.get(x.assetId()));
