@@ -30,6 +30,7 @@ public class DSCConfig {
     private DSCComponentConfig converter;
     private DSCComponentConfig adapter;
     private TriggerConfig trigger;
+    private int timeout;
 
     /**
      * Returns the configured name of this MX-Port.
@@ -85,6 +86,10 @@ public class DSCConfig {
         return adapter;
     }
 
+    public int getTimeout() {
+        return timeout;
+    }
+
     /**
      * Returns the optional trigger configuration for this MX-Port (resthook, scheduler, ...).
      *
@@ -120,5 +125,9 @@ public class DSCConfig {
 
     public void setAdapter(DSCComponentConfig adapter) {
         this.adapter = adapter;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 }

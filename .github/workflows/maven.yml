@@ -7,29 +7,23 @@ on:
         required: false
         type: string
         default: "pom.xml"
+      maven-phase:
+        description: "Maven phase to execute"
+        required: false
+        type: string
+        default: "install"
       maven-args:
-        description: "Additional Maven arguments to pass"
+        description: "Additional Maven arguments"
         required: false
         type: string
       build-artifact-name:
         description: "Name of the build artifact to download"
-        required: true
+        required: false
         type: string
       build-artifact-path:
         description: "Path of the build artifact to download"
-        required: true
+        required: false
         type: string
-      # Need install for local dependencies which are used later in workflow, e.g. for the BOM package
-      install-to-local-repo:
-        description: "Use 'install' instead of 'package' for local dependencies"
-        required: false
-        type: boolean
-        default: false
-      download-dependencies-artifacts:
-        description: "Download Maven artifacts from previous jobs"
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -38,10 +32,9 @@ jobs:
   maven:
     name: Maven Build & Test
     permissions:
-      contents: write    
-      security-events: write
+      contents: write
       actions: read
-      packages: read
+      packages: write # write impliziert read
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -51,14 +44,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-
-      - name: Set up Maven Cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -71,43 +56,30 @@ jobs:
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
 
-      - name: Download previous Maven artifacts
-        if: ${{ inputs.download-dependencies-artifacts }}
-        continue-on-error: true
-        uses: actions/download-artifact@v7
+      - name: Set up Maven Cache
+        uses: actions/cache@v5
         with:
-          pattern: '*-maven-repo'
-          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace_consumer/
-          merge-multiple: true
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
       - name: Run Spotless Check
         run: ./mvnw -f ${{ inputs.pom-file }} -B spotless:check
-        
+
       - name: Build & test maven project
-        run: |
-          if [ "${{ inputs.install-to-local-repo }}" == "true" ]; then
-            ./mvnw -f ${{ inputs.pom-file }} -B ${{ inputs.maven-args }} install
-          else
-            ./mvnw -f ${{ inputs.pom-file }} -B ${{ inputs.maven-args }} package
-          fi
+        run: ./mvnw -f ${{ inputs.pom-file }} -B ${{ inputs.maven-args }} ${{ inputs.maven-phase }}
 
       - name: Update dependency graph
-        if: github.repository == 'FraunhoferIOSB/DataSpaceConsumer' && github.event_name == 'push' && github.ref_name == 'main'
+        if: github.ref_name == 'main'
         uses: advanced-security/maven-dependency-submission-action@v5
         with:
           maven-args: -f ${{ inputs.pom-file }}
 
       - name: Upload maven build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
+        if: ${{ inputs.build-artifact-name && inputs.build-artifact-path }}
         with:
           name: ${{ inputs.build-artifact-name }}
           path: ${{ inputs.build-artifact-path }}
-          retention-days: 4
-
-      - name: Upload Maven artifacts to local repo cache
-        if: ${{ inputs.install-to-local-repo }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ inputs.build-artifact-name }}-maven-repo
-          path: ~/.m2/repository/de/fraunhofer/iosb/ilt/dataspace_consumer/
           retention-days: 4
