@@ -97,3 +97,16 @@ mvn spotless:apply
 # Run spotless checks
 mvn spotless:check 
 ```
+
+
+## Use maven wrapper
+To use the maven wrapper, execute the commands with:
+
+```bash
+# From project root 
+mvnw <command>
+
+# From module directory, e.g. framework
+..\mvnw <command>
+```
+
