@@ -99,15 +99,34 @@ public class AccessUsageControlImpl
 
     private Response getResponse(Request request, String requestName) {
         try {
-            return client.newCall(request).execute();
+            Response response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                throw new DSCExecuteException(
+                        "Request for "
+                                + requestName
+                                + " ("
+                                + request.url()
+                                + ") not successful: HTTP "
+                                + response.code()
+                                + " - "
+                                + response.message());
+            }
+            return response;
         } catch (SocketTimeoutException e) {
             throw new DSCExecuteException(
-                    "Timeout during " + requestName + " request: " + e.getMessage());
+                    "Timeout during "
+                            + requestName
+                            + " ("
+                            + request.url()
+                            + ") request: "
+                            + e.getMessage());
         } catch (IOException exception) {
             throw new DSCExecuteException(
                     "Exception on "
                             + requestName
-                            + " request execution: "
+                            + "("
+                            + request.url()
+                            + ") request execution: "
                             + exception.getMessage());
         }
     }
