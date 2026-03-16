@@ -100,7 +100,7 @@ public class RestHookTrigger extends Trigger {
         // Start executing the MX-Port asynchronously using CompletableFuture
         CompletableFuture.runAsync(
                 () -> {
-                    execute(mxPortName);
+                    execute(mxPortName, portConfig.getTimeout());
                 });
 
         // Return HTTP 204 (No Content) immediately after starting the execution

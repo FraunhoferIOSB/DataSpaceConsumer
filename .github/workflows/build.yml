@@ -27,16 +27,16 @@ jobs:
       pull-requests: read
     outputs:
       isTag: ${{ (github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')) && 'true' || 'false' }}
-      parent: ${{ (startsWith(github.ref, 'refs/tags/parent-v') || (github.ref_type != 'tag' && steps.filter.outputs.parent == 'true')) && 'true' || 'false' }}
-      bom: ${{ (github.ref_type != 'tag' && steps.filter.outputs.bom == 'true') && 'true' || 'false' }}
-      api: ${{ (github.ref_type != 'tag' && steps.filter.outputs.api == 'true') && 'true' || 'false' }}
-      framework: ${{ (github.ref_type != 'tag' && steps.filter.outputs.framework == 'true') && 'true' || 'false' }}
-      extensions: ${{ (github.ref_type != 'tag' && steps.filter.outputs.extensions == 'true') && 'true' || 'false' }}
+      parent: ${{ (github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/parent-v') || steps.filter.outputs.parent == 'true') && 'true' || 'false' }}
+      bom: ${{ (github.ref_name == 'main' || steps.filter.outputs.bom == 'true') && 'true' || 'false' }}
+      api: ${{ (github.ref_name == 'main' || steps.filter.outputs.api == 'true') && 'true' || 'false' }}
+      framework: ${{ (github.ref_name == 'main' || steps.filter.outputs.framework == 'true') && 'true' || 'false' }}
+      extensions: ${{ (github.ref_name == 'main' || steps.filter.outputs.extensions == 'true') && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && github.ref_name != 'main'
         with:
           base: ${{ github.base_ref || github.ref }}
           filters: |

@@ -43,10 +43,10 @@ public class Trigger {
      *
      * @param mxPortName the name of the MX-Port to execute
      */
-    protected void execute(String mxPortName) {
+    protected void execute(String mxPortName, long timeout) {
         try {
             LOGGER.info("Trigger invoked for MX-Port: {}", mxPortName);
-            mxPortExecutor.execute(mxPortName);
+            mxPortExecutor.execute(mxPortName, timeout);
         } catch (DSCExecuteException e) {
             LOGGER.error("Execution failed for MX-Port {}: {}", mxPortName, e.getMessage(), e);
         }

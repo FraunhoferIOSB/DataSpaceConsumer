@@ -22,6 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessAndUsageControl;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessRequest;
@@ -63,6 +65,28 @@ public class DSCExecutor {
      */
     public DSCExecutor(DSCPluginRegistry pluginRegistry) {
         this.pluginRegistry = pluginRegistry;
+    }
+
+    public void execute(String mxPortName, long timeout) throws DSCExecuteException {
+        ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+
+        Future<?> future = executor.submit(() -> execute(mxPortName));
+
+        try {
+            future.get(timeout, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            throw new DSCExecuteException("MX-Port execution timed out", e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof DSCExecuteException d) {
+                throw d;
+            }
+            throw new DSCExecuteException(cause.getMessage(), cause);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new DSCExecuteException("Execution interrupted", e);
+        }
     }
 
     /**
