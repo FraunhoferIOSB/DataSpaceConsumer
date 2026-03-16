@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessResponse;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateRequest;
 import org.pf4j.ExtensionPoint;
 
@@ -40,7 +41,7 @@ public interface Discovery<C> extends ExtensionPoint {
      * @return an {@link AccessRequest} instance containing the information needed to perform
      *     discovery requests
      */
-    AccessRequest getDiscoveryAccessRequest();
+    AccessRequest getDiscoveryAccessRequest() throws DSCExecuteException;
 
     /**
      * Executes the discovery using the provided access response and returns the discovered
@@ -53,7 +54,7 @@ public interface Discovery<C> extends ExtensionPoint {
      *     discovery (e.g. authorization or context hints)
      * @return the discovered information of type {@code C}
      */
-    C discover(AccessResponse request);
+    C discover(AccessResponse request) throws DSCExecuteException;
 
     /**
      * Derives a list of {@link AccessRequest}s from the discovered information that are required to
@@ -65,7 +66,7 @@ public interface Discovery<C> extends ExtensionPoint {
      * @param discoveredInfos the information produced by {@link #discover(AccessResponse)}
      * @return a list of {@link AccessRequest} objects that can be used for gate calls
      */
-    List<AccessRequest> getGateAccessRequests(C discoveredInfos);
+    List<AccessRequest> getGateAccessRequests(C discoveredInfos) throws DSCExecuteException;
 
     /**
      * Helper method that converts a list of {@link AccessResponse} objects into a list of {@link
@@ -81,7 +82,7 @@ public interface Discovery<C> extends ExtensionPoint {
      * @return list of {@link GateRequest} objects
      */
     default List<GateRequest> convertToGateRequests(
-            List<AccessResponse> accessResponses, C discoverdInfos) {
+            List<AccessResponse> accessResponses, C discoverdInfos) throws DSCExecuteException {
         return accessResponses.stream().map(GateRequest::new).collect(Collectors.toList());
     }
 }
