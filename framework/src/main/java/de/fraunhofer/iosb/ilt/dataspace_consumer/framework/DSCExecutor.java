@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -41,10 +42,16 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.extension.DSCPluginRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DSCExecutor {
+    @Value("${concurrency.max-gate-requests:10}")
+    private int MAX_CONCURRENT_GATE_REQUESTS;
+
+    @Value("${concurrency.max-access-requests:10}")
+    private int MAX_CONCURRENT_ACCESS_REQUESTS;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DSCExecutor.class);
 
@@ -201,23 +208,38 @@ public class DSCExecutor {
             AccessAndUsageControl accessControl, List<AccessRequest> accessRequests)
             throws DSCExecuteException {
 
+        LOGGER.info(
+                "Executing access requests with "
+                        + MAX_CONCURRENT_ACCESS_REQUESTS
+                        + " concurrent threads");
+        final Semaphore semaphore = new Semaphore(MAX_CONCURRENT_ACCESS_REQUESTS);
+
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            return accessRequests.stream()
-                    .map(
-                            accessRequest ->
-                                    executor.submit(
-                                            () ->
-                                                    accessControl.retrieveAccessInformation(
-                                                            accessRequest)))
-                    .map(
-                            future -> {
-                                try {
-                                    return future.get();
-                                } catch (InterruptedException | ExecutionException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            })
-                    .toList();
+            List<Future<AccessResponse>> futures = new ArrayList<>();
+
+            for (AccessRequest accessRequest : accessRequests) {
+                Future<AccessResponse> future =
+                        executor.submit(
+                                () -> {
+                                    semaphore.acquire();
+                                    try {
+                                        return accessControl.retrieveAccessInformation(
+                                                accessRequest);
+                                    } finally {
+                                        semaphore.release();
+                                    }
+                                });
+                futures.add(future);
+            }
+
+            // Collect results
+            List<AccessResponse> accessResponses = new ArrayList<>();
+            for (Future<AccessResponse> future : futures) {
+                accessResponses.add(future.get());
+            }
+            return accessResponses;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new DSCExecuteException("Error retrieving access info: " + e.getMessage(), e);
         }
     }
 
@@ -239,7 +261,13 @@ public class DSCExecutor {
             Gate gate, List<GateRequest> gateRequests, ConverterCapabilities converterCapabilities)
             throws DSCExecuteException {
 
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        LOGGER.info(
+                "Executing gate requests with "
+                        + MAX_CONCURRENT_GATE_REQUESTS
+                        + " concurrent threads");
+        final Semaphore semaphore = new Semaphore(MAX_CONCURRENT_GATE_REQUESTS);
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Future<GateResponse>> futures = new ArrayList<>();
 
             for (GateRequest gateRequest : gateRequests) {
@@ -248,12 +276,15 @@ public class DSCExecutor {
                 Future<GateResponse> future =
                         executor.submit(
                                 () -> {
+                                    semaphore.acquire();
                                     try {
                                         return gate.getData(
                                                 gateRequest,
                                                 converterCapabilities.getSupportedFormats());
                                     } catch (GateFormatNotSupportedException e) {
                                         throw new DSCExecuteException(e.getMessage(), e);
+                                    } finally {
+                                        semaphore.release();
                                     }
                                 });
                 futures.add(future);
