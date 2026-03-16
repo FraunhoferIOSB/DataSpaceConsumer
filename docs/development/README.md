@@ -60,7 +60,7 @@ cd scripts
 ## Linux
 bash ./scripts/copy-jars.sh
 ```
-
+---
 To build the framework module, execute the following command from the project root:
 
 ```bash
@@ -74,6 +74,17 @@ mvn spring-boot:run "-Dspring-boot.run.profiles=dev"
 
 # Bundle the application into a jar file
 mvn clean package
+```
+---
+To debug the framework with the extensions set log level to DEBUG:
+```bash
+mvn spring-boot:run "-Dspring-boot.run.arguments=--logging.level.root=DEBUG"
+```
+Or add the following to the `application.yaml`:
+```yaml 
+logging:
+  level:
+    root: DEBUG
 ```
 
 ### Running spotless 
