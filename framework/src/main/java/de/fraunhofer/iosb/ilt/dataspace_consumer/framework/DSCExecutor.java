@@ -208,7 +208,7 @@ public class DSCExecutor {
             AccessAndUsageControl accessControl, List<AccessRequest> accessRequests)
             throws DSCExecuteException {
 
-        LOGGER.info(
+        LOGGER.debug(
                 "Executing access requests with "
                         + MAX_CONCURRENT_ACCESS_REQUESTS
                         + " concurrent threads");
@@ -261,7 +261,7 @@ public class DSCExecutor {
             Gate gate, List<GateRequest> gateRequests, ConverterCapabilities converterCapabilities)
             throws DSCExecuteException {
 
-        LOGGER.info(
+        LOGGER.debug(
                 "Executing gate requests with "
                         + MAX_CONCURRENT_GATE_REQUESTS
                         + " concurrent threads");
