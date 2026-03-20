@@ -2,6 +2,13 @@ spring:
   application:
     name: dataspace-consumer-framework
 
+concurrency:
+  # Limit maximum number of concurrent requets for gate requets
+  max-gate-requests: 10
+  # Limit maximum number of concurrent requets for access and usage control requets
+  max-access-requests: 10
+
+# Configuration for the MX-Ports
 mx-port: []
   # - name: MX-Port1
   #   discovery:

@@ -21,10 +21,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +35,7 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subpr
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.config.Configurable;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.discovery.Discovery;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateRequest;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -55,7 +54,7 @@ import org.pf4j.Extension;
  * DSP endpoints and hrefs from the catalogue response and converts them to the appropriate
  * AccessRequest and GateRequest objects used by the framework.
  */
-public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurable {
+public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
 
     private final ObjectMapper mapper;
     private final OkHttpClient client;
@@ -158,7 +157,7 @@ public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurabl
      * @return an AccessRequest (DSPRequest) suitable for discovery
      */
     @Override
-    public AccessRequest getDiscoveryAccessRequest() {
+    public AccessRequest getDiscoveryAccessRequest() throws DSCExecuteException {
 
         DSPFilter filter =
                 new DSPFilter(
@@ -181,7 +180,7 @@ public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurabl
      * @throws RuntimeException if the HTTP request fails or the response cannot be parsed
      */
     @Override
-    public Optional<JsonNode> discover(AccessResponse accessResponse) {
+    public JsonNode discover(AccessResponse accessResponse) throws DSCExecuteException {
 
         Request request =
                 new Request.Builder()
@@ -201,15 +200,15 @@ public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurabl
                 throw new IOException("Empty response body");
             }
 
-            return Optional.of(mapper.readTree(body.string()));
+            return mapper.readTree(body.string());
 
         } catch (IOException e) {
 
-            LOGGER.log(
-                    Level.WARNING,
-                    "Failed to fetch or parse API response from {0}",
-                    new Object[] {accessResponse.url()});
-            return Optional.empty();
+            throw new DSCExecuteException(
+                    "Failed to fetch or parse API response from "
+                            + accessResponse.url()
+                            + ": "
+                            + e.getMessage());
         }
     }
 
@@ -226,15 +225,13 @@ public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurabl
      *     discovered asset
      */
     @Override
-    public List<AccessRequest> getGateAccessRequests(Optional<JsonNode> discoveredInfos) {
+    public List<AccessRequest> getGateAccessRequests(JsonNode discoveredInfos)
+            throws DSCExecuteException {
 
-        if (discoveredInfos.isEmpty()) {
-            return new ArrayList<>();
-        }
         // we only need one access request per assetId
         Set<String> includedAssetIDs = new HashSet<>();
 
-        return getResultItems(discoveredInfos.get()).stream()
+        return getResultItems(discoveredInfos).stream()
                 .filter(x -> includedAssetIDs.add(x.assetId()))
                 .map(
                         x -> {
@@ -262,11 +259,8 @@ public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurabl
      */
     @Override
     public List<GateRequest> convertToGateRequests(
-            List<AccessResponse> accessResponses, Optional<JsonNode> discoveredInfos) {
-
-        if (discoveredInfos.isEmpty()) {
-            return new ArrayList<>();
-        }
+            List<AccessResponse> accessResponses, JsonNode discoveredInfos)
+            throws DSCExecuteException {
 
         // map assetId to token:
         HashMap<String, String> tokenMap = new HashMap<>();
@@ -274,7 +268,7 @@ public class DiscoveryImpl implements Discovery<Optional<JsonNode>>, Configurabl
             tokenMap.put((String) response.identifier(), response.token());
         }
 
-        return getResultItems(discoveredInfos.get()).stream()
+        return getResultItems(discoveredInfos).stream()
                 .map(
                         x -> {
                             return new GateRequest(
