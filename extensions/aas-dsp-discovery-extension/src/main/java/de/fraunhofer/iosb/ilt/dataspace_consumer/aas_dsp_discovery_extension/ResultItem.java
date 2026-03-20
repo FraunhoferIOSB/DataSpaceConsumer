@@ -25,5 +25,6 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.aas_dsp_discovery_extension;
  * @param assetId unique identifier of the discovered asset (used in DSP filters)
  * @param endpoint DSP endpoint (URL) to which access requests for this asset should be sent
  * @param href HTTP href that can be used with GateRequest to retrieve the asset content
+ * @param isSubmodel determines whether the result specifies a submodel or an asset
  */
-public record ResultItem(String assetId, String endpoint, String href) {}
+public record ResultItem(String assetId, String endpoint, String href, String interfaceType) {}

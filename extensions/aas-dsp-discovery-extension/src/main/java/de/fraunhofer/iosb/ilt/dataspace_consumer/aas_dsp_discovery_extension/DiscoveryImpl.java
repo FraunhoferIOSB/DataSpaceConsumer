@@ -97,6 +97,8 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
         }
 
         for (JsonNode endpoint : endpoints) {
+
+            String interfaceType = endpoint.path("interface").asText(null);
             JsonNode proto = endpoint.path("protocolInformation");
 
             String href = proto.path("href").asText(null);
@@ -114,7 +116,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
             String assetId = matcher.group(1);
             String dspEndpoint = matcher.group(2);
 
-            ResultItem item = new ResultItem(assetId, dspEndpoint, href);
+            ResultItem item = new ResultItem(assetId, dspEndpoint, href, interfaceType);
 
             result.add(item);
         }
@@ -269,7 +271,8 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
         return getResultItems(discoveredInfos).stream()
                 .map(
                         x -> {
-                            return new GateRequest(x.href(), tokenMap.get(x.assetId()));
+                            return new GateRequest(
+                                    x.href(), tokenMap.get(x.assetId()), x.interfaceType());
                         })
                 .toList();
     }
