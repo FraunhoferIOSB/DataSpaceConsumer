@@ -97,6 +97,7 @@ public class FileAdapter implements Adapter, Configurable {
         LOG.info("=== FileAdapter ===");
 
         try {
+            Files.createDirectories(path.getParent());
             Files.write(path, request.getPayload());
             LOG.info("Payload saved in: {}", path);
         } catch (IOException e) {
