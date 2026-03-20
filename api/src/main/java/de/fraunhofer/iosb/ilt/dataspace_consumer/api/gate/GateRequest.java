@@ -24,8 +24,10 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.Acces
  *
  * @param url the resource URL to request
  * @param token optional access token (may be null)
+ * @param metaInformation optional extra information on how to process the information provided by
+ *     the gate (may be null)
  */
-public record GateRequest(String url, String token) {
+public record GateRequest(String url, String token, Object metaInformation) {
 
     /**
      * Create a {@link GateRequest} from an {@link AccessResponse}.
@@ -33,6 +35,17 @@ public record GateRequest(String url, String token) {
      * @param accessResponse access response containing URL and token
      */
     public GateRequest(AccessResponse accessResponse) {
-        this(accessResponse.url(), accessResponse.token());
+        this(accessResponse.url(), accessResponse.token(), null);
+    }
+
+    /**
+     * Create a {@link GateRequest} from an {@link AccessResponse}.
+     *
+     * @param accessResponse access response containing URL and token
+     * @param metaInformation optional extra information on how to process the information provided
+     *     by the gate (may be null)
+     */
+    public GateRequest(AccessResponse accessResponse, Object metaInformation) {
+        this(accessResponse.url(), accessResponse.token(), metaInformation);
     }
 }
