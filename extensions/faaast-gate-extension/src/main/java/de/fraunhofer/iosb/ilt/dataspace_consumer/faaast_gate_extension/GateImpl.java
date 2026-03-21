@@ -58,7 +58,16 @@ public class GateImpl implements Gate {
         Map<String, List<String>> headers = new HashMap<>();
         try {
 
-            URI aasServerAddressUri = new URI(gateRequest.url());
+            String url = gateRequest.url();
+
+            // faaast-client needs urls without the /shells or /submodels suffix:
+            if (url.endsWith("/shells")) {
+                url = url.substring(0, url.length() - 7);
+            } else if (url.endsWith("/submodels")) {
+                url = url.substring(0, url.length() - 10);
+            }
+
+            URI aasServerAddressUri = new URI(url);
             String interfaceType = null;
 
             Object metaInfo = gateRequest.metaInformation();
@@ -126,6 +135,8 @@ public class GateImpl implements Gate {
         } catch (StatusCodeException exception) {
             LOGGER.severe(
                     "Received unexpected status code from AAS server: " + exception.getMessage());
+        } catch (Exception exception) {
+            LOGGER.severe("Unexpected exception: " + exception.getMessage());
         }
         return new GateResponse(500, GateResponseFormat.JSON, null, null, null);
     }
