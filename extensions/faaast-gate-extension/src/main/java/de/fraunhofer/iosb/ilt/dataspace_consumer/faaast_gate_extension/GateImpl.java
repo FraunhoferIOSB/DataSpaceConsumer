@@ -56,7 +56,8 @@ public class GateImpl implements Gate {
         List<Submodel> submodels = new ArrayList<>();
 
         Map<String, List<String>> headers = new HashMap<>();
-        try {
+        try (TokenAuthenticatedHttpClient client =
+                new TokenAuthenticatedHttpClient(gateRequest.token())) {
 
             String url = gateRequest.url();
 
@@ -78,34 +79,21 @@ public class GateImpl implements Gate {
             if (interfaceType == null || interfaceType.startsWith("aas-repo")) {
 
                 AASRepositoryInterface aasRepo =
-                        new AASRepositoryInterface.Builder()
-                                .endpoint(aasServerAddressUri)
-                                .authenticationHeaderProvider(gateRequest::token)
-                                .build();
+                        new AASRepositoryInterface(aasServerAddressUri, client);
                 shells.addAll(aasRepo.getAll());
 
             } else if (interfaceType.startsWith("aas")) {
-                AASInterface aasInterface =
-                        new AASInterface.Builder()
-                                .endpoint(aasServerAddressUri)
-                                .authenticationHeaderProvider(gateRequest::token)
-                                .build();
+                AASInterface aasInterface = new AASInterface(aasServerAddressUri, client);
                 shells.add(aasInterface.get());
 
             } else if (interfaceType.startsWith("submodel-repo")) {
 
                 SubmodelRepositoryInterface submodelRepo =
-                        new SubmodelRepositoryInterface.Builder()
-                                .endpoint(aasServerAddressUri)
-                                .authenticationHeaderProvider(gateRequest::token)
-                                .build();
+                        new SubmodelRepositoryInterface(aasServerAddressUri, client);
                 submodels.addAll(submodelRepo.getAll());
             } else if (interfaceType.startsWith("submodel")) {
                 SubmodelInterface submodelInterface =
-                        new SubmodelInterface.Builder()
-                                .endpoint(aasServerAddressUri)
-                                .authenticationHeaderProvider(gateRequest::token)
-                                .build();
+                        new SubmodelInterface(aasServerAddressUri, client);
                 submodels.add(submodelInterface.get());
             } else {
 
