@@ -81,7 +81,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
     }
 
     private static final Pattern SUBPROTOCOL_PATTERN =
-            Pattern.compile("d=([^;]+);[^;=\\s]+ndpoint=([^;]+)");
+            Pattern.compile("d=([^;]+);[^;=\s]+ndpoint=([^;\"]+)");
 
     /**
      * has a side effect on the endpointToHrefMap
