@@ -155,7 +155,7 @@ mx-port:
 
 **3. Configure the trigger in [application.yaml](./mx-port-consumer-framework/src/main/resources/application.yaml)**
 
-Choose **one** trigger type:
+Choose a trigger method:
 
 Option A: REST Hook
 ```yaml
@@ -163,14 +163,10 @@ Option A: REST Hook
       restHook:
         enabled: true
 ```
-→ Trigger via REST to /trigger with request body mxPortName: 
+→ Trigger via REST to /trigger with request parameter mxPortName: 
 ```bash
 curl --request POST \
-  --url http://localhost:8080/trigger \
-  --header 'content-type: application/json' \
-  --data '{
-  "mxPortName": {mxPortName}
-}'
+  --url "http://localhost:8080/trigger?mxPortName={mxPortName}
 ```
 
 Option B: Scheduler
