@@ -34,7 +34,7 @@
     <dataspace_consumer.api.version>0.0.2-SNAPSHOT</dataspace_consumer.api.version>
 
     <okhttp.version>5.3.2</okhttp.version>
-    <faaast.client.version>1.0.0</faaast.client.version>
+    <faaast.client.version>1.1.0</faaast.client.version>
     <digitaltwin.aas4j.version>2.0.1</digitaltwin.aas4j.version>
 
     <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
