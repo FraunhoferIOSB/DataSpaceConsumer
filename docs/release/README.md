@@ -8,60 +8,17 @@ Each module has its own independent version number:
 - `framework/pom.xml` - Framework version
 - `extensions/pom.xml` - Extensions version
 
+## Versioning
+- Version without SNAPSHOT: Release version
+- Version with SNAPSHOT: Development version after release
+Make sure to push the new -SNAPSHOT version commit after the release commit!
+
 ## Preparation
 
 1. Ensure all tests on `main` have passed
 2. Verify that all changes are committed and pushed
 
 ## Performing a Release
-
-### Option 1: Release a Single Module
-
-#### 1. Update version in the module's `pom.xml`
-
-Change the version from `X.X.X-SNAPSHOT` to `X.X.X`:
-
-```bash
-# Example: Update api version to 2.1.5
-cd api
-mvn versions:set -DnewVersion=2.1.5
-mvn versions:commit
-```
-
-Keep in mind to update the other pom.xml also. Changes to:
-- bom version, update api, framework, extensions version in properties
-- api version, update framework, extensions version in properties
-- framework version, no other version updates
-- extensions version, no other version update
-
-
-#### 2. Commit changes
-
-```bash
-git add . && git commit -m "Release api version 2.1.5"
-```
-
-#### 3. Create release tag
-
-Use a module-specific tag:
-
-```bash
-git tag api-v2.1.5
-git push origin api-v2.1.5
-```
-
-The pipeline is triggered and publishes only the `api` release to GitHub Packages.
-
-#### 4. Prepare next development version
-
-```bash
-mvn versions:set -DnewVersion=2.1.6-SNAPSHOT -pl api
-mvn versions:commit
-git add . && git commit -m "Bump api to 2.1.6-SNAPSHOT"
-git push
-```
-
-### Option 2: Release All Modules (Synchronized Release)
 
 If you need to release everything at once:
 
