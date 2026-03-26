@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.Gate;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateRequest;
@@ -48,6 +49,14 @@ public class GateImpl implements Gate {
     private static final Logger LOGGER = Logger.getLogger(GateImpl.class.getName());
 
     public GateImpl() {}
+
+    private static final Pattern AAS_REPO_PATTERN = Pattern.compile("^aas[-_]repo.*");
+
+    private static final Pattern AAS_PATTERN = Pattern.compile("^aas.*");
+
+    private static final Pattern SUBMODEL_REPO_PATTERN = Pattern.compile("^submodel[-_]repo.*");
+
+    private static final Pattern SUBMODEL_PATTERN = Pattern.compile("^submodel.*");
 
     @Override
     public GateResponse getData(GateRequest gateRequest, List<GateResponseFormat> desiredFormats) {
@@ -76,22 +85,22 @@ public class GateImpl implements Gate {
                 interfaceType = ((String) metaInfo).toLowerCase();
             }
 
-            if (interfaceType == null || interfaceType.startsWith("aas-repo")) {
+            if (interfaceType == null || AAS_REPO_PATTERN.matcher(interfaceType).matches()) {
 
                 AASRepositoryInterface aasRepo =
                         new AASRepositoryInterface(aasServerAddressUri, client);
                 shells.addAll(aasRepo.getAll());
 
-            } else if (interfaceType.startsWith("aas")) {
+            } else if (AAS_PATTERN.matcher(interfaceType).matches()) {
                 AASInterface aasInterface = new AASInterface(aasServerAddressUri, client);
                 shells.add(aasInterface.get());
 
-            } else if (interfaceType.startsWith("submodel-repo")) {
+            } else if (SUBMODEL_REPO_PATTERN.matcher(interfaceType).matches()) {
 
                 SubmodelRepositoryInterface submodelRepo =
                         new SubmodelRepositoryInterface(aasServerAddressUri, client);
                 submodels.addAll(submodelRepo.getAll());
-            } else if (interfaceType.startsWith("submodel")) {
+            } else if (SUBMODEL_PATTERN.matcher(interfaceType).matches()) {
                 SubmodelInterface submodelInterface =
                         new SubmodelInterface(aasServerAddressUri, client);
                 submodels.add(submodelInterface.get());
