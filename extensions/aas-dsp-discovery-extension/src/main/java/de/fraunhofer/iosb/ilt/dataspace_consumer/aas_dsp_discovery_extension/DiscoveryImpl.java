@@ -57,7 +57,7 @@ import org.pf4j.Extension;
 public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
 
     private final ObjectMapper mapper;
-    private final OkHttpClient client;
+    private OkHttpClient client;
 
     private static final Logger LOGGER = Logger.getLogger(DiscoveryImpl.class.getName());
 
@@ -73,15 +73,15 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
         mapper = new ObjectMapper();
         client =
                 new OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(10, TimeUnit.SECONDS)
-                        .writeTimeout(10, TimeUnit.SECONDS)
-                        .callTimeout(20, TimeUnit.SECONDS)
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS)
+                        .writeTimeout(30, TimeUnit.SECONDS)
+                        .callTimeout(30, TimeUnit.SECONDS)
                         .build();
     }
 
     private static final Pattern SUBPROTOCOL_PATTERN =
-            Pattern.compile("assetId=([^;]+);dsp_endpoint=([^;]+)");
+            Pattern.compile("d=([^;]+);[^;=\s]+ndpoint=([^;\"]+)");
 
     /**
      * has a side effect on the endpointToHrefMap
@@ -293,5 +293,16 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
         }
 
         this.baseURL = config.get("baseUrl").toString();
+        Object timeoutObject = config.get("timeout");
+        if (timeoutObject != null) {
+            int timeout = Integer.parseInt(timeoutObject.toString());
+            this.client =
+                    new OkHttpClient.Builder()
+                            .connectTimeout(timeout, TimeUnit.SECONDS)
+                            .readTimeout(timeout, TimeUnit.SECONDS)
+                            .writeTimeout(timeout, TimeUnit.SECONDS)
+                            .callTimeout(timeout, TimeUnit.SECONDS)
+                            .build();
+        }
     }
 }
