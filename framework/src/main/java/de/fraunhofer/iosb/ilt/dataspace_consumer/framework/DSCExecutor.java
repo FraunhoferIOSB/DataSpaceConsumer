@@ -42,16 +42,10 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.extension.DSCPluginRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DSCExecutor {
-    @Value("${concurrency.max-gate-requests:10}")
-    private int MAX_CONCURRENT_GATE_REQUESTS;
-
-    @Value("${concurrency.max-access-requests:10}")
-    private int MAX_CONCURRENT_ACCESS_REQUESTS;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DSCExecutor.class);
 
@@ -110,6 +104,7 @@ public class DSCExecutor {
         Gate gate = plugins.getGate();
         Converter converter = plugins.getConverter();
         Adapter adapter = plugins.getAdapter();
+        int maxGateRequests = plugins.getExecutionConfig().getMaxGateRequests();
 
         // Execute components in sequence
         LOGGER.info("Executing workflow components for MX-Port: {}", mxPortName);
@@ -120,15 +115,22 @@ public class DSCExecutor {
                 "Converter capabilities retrieved: {}",
                 converterCapabilities.getSupportedFormats());
 
-        // 1. (Layer 5): Execute Discovery and obtain gate requests
+        // 1. (Layer 5): Execute Discovery phase
         // uses 4. (layer 4): access control
         LOGGER.info("Executing discovery for MX-Port: {}", mxPortName);
-        List<GateRequest> gateRequests = executeDiscoveryPhase(discovery, accessControl);
+        DiscoveryResult discoveryResult = executeDiscoveryPhase(discovery, accessControl);
 
-        // 3. (Layer 3): Execute Gate for each GateRequest in parallel using Virtual Threads
+        // 3. (Layer 3): Execute batched Gate phase for each access request in parallel
         LOGGER.info("Executing gate for MX-Port: {}", mxPortName);
         List<GateResponse> gateResponses =
-                executeGatePhase(gate, gateRequests, converterCapabilities);
+                executeBatchedGatePhase(
+                        discovery,
+                        accessControl,
+                        gate,
+                        converterCapabilities,
+                        maxGateRequests,
+                        discoveryResult.gateAccessRequests,
+                        discoveryResult.discoveredInfos);
 
         // Check all gate responses successful before proceeding to conversion
         gateResponses.forEach(
@@ -157,25 +159,37 @@ public class DSCExecutor {
     }
 
     /**
-     * Executes the Discovery phase (Layer 5) and retrieves the gate requests.
+     * Represents the result of the discovery phase containing access requests and discovered info.
+     */
+    private static class DiscoveryResult {
+        final List<AccessRequest> gateAccessRequests;
+        final Object discoveredInfos;
+
+        DiscoveryResult(List<AccessRequest> gateAccessRequests, Object discoveredInfos) {
+            this.gateAccessRequests = gateAccessRequests;
+            this.discoveredInfos = discoveredInfos;
+        }
+    }
+
+    /**
+     * Executes the Discovery phase (Layer 5) and retrieves access requests.
      *
-     * <p>This method orchestrates the discovery workflow including:
+     * <p>This method orchestrates the initial discovery workflow including:
      *
      * <ul>
      *   <li>Obtaining the discovery access request
      *   <li>Retrieving access information for discovery
      *   <li>Executing the discovery process
-     *   <li>Retrieving access information for each discovered resource in parallel
-     *   <li>Converting discovered information into gate requests
+     *   <li>Extracting access requests for each discovered resource
      * </ul>
      *
      * @param discovery the discovery plugin instance (raw type due to plugin system)
      * @param accessControl the access and usage control plugin (raw type due to plugin system)
-     * @return a list of GateRequest objects to be processed by the Gate component
+     * @return a DiscoveryResult containing access requests and discovered information
      * @throws DSCExecuteException if negotiation fails or the discovery process encounters an error
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private List<GateRequest> executeDiscoveryPhase(
+    private DiscoveryResult executeDiscoveryPhase(
             Discovery discovery, AccessAndUsageControl accessControl) throws DSCExecuteException {
         AccessRequest discoveryAccessRequest = discovery.getDiscoveryAccessRequest();
 
@@ -186,21 +200,82 @@ public class DSCExecutor {
 
         List<AccessRequest> gateAccessRequests = discovery.getGateAccessRequests(discoveredInfos);
 
-        // Retrieve access responses in parallel using virtual threads
-        List<AccessResponse> gateAccessResponses =
-                retrieveAccessInfosInParallel(accessControl, gateAccessRequests);
+        return new DiscoveryResult(gateAccessRequests, discoveredInfos);
+    }
 
-        return discovery.convertToGateRequests(gateAccessResponses, discoveredInfos);
+    /**
+     * Executes the Gate phase in batches to manage concurrent requests efficiently.
+     *
+     * <p>This method processes access requests in batches of maxGateRequests:
+     *
+     * <ul>
+     *   <li>For each batch, retrieve access responses in parallel
+     *   <li>Then convert the responses to gate requests
+     *   <li>Then execute gate.getData for the gate requests in parallel
+     *   <li>Repeat until all access requests are processed
+     * </ul>
+     *
+     * @param discovery the discovery plugin instance (raw type due to plugin system)
+     * @param accessControl the access and usage control plugin (raw type due to plugin system)
+     * @param gate the gate plugin instance
+     * @param converterCapabilities the converter capabilities containing supported formats
+     * @param maxGateRequests the maximum number of concurrent gate requests for this MX-Port
+     * @param gateAccessRequests the list of access requests to process in batches
+     * @param discoveredInfos the discovered information from discovery
+     * @return a list of all GateResponse objects from all batches
+     * @throws DSCExecuteException if batch processing fails
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private List<GateResponse> executeBatchedGatePhase(
+            Discovery discovery,
+            AccessAndUsageControl accessControl,
+            Gate gate,
+            ConverterCapabilities converterCapabilities,
+            int maxGateRequests,
+            List<AccessRequest> gateAccessRequests,
+            Object discoveredInfos)
+            throws DSCExecuteException {
+
+        List<GateResponse> allGateResponses = new ArrayList<>();
+
+        // Process access requests in batches
+        for (int i = 0; i < gateAccessRequests.size(); i += maxGateRequests) {
+            int endIndex = Math.min(i + maxGateRequests, gateAccessRequests.size());
+            List<AccessRequest> batch = gateAccessRequests.subList(i, endIndex);
+
+            LOGGER.debug(
+                    "Processing batch {} of access requests (size: {})",
+                    (i / maxGateRequests) + 1,
+                    batch.size());
+
+            // Step 1: Retrieve access responses for the entire batch in parallel
+            List<AccessResponse> batchAccessResponses =
+                    retrieveAccessInfosInParallel(accessControl, batch);
+
+            // Step 2: Convert access responses to gate requests
+            List<GateRequest> batchGateRequests =
+                    discovery.convertToGateRequests(batchAccessResponses, discoveredInfos);
+
+            // Step 3: Execute gate.getData for the gate requests in parallel
+            List<GateResponse> batchGateResponses =
+                    executeGatePhase(
+                            gate, batchGateRequests, converterCapabilities, maxGateRequests);
+
+            allGateResponses.addAll(batchGateResponses);
+        }
+
+        return allGateResponses;
     }
 
     /**
      * Retrieves access information for multiple access requests in parallel using virtual threads.
      *
      * <p>This method executes AccessAndUsageControl.retrieveAccessInformation for each provided
-     * access request concurrently, improving performance when handling multiple resources.
+     * access request concurrently. The batch size is already limited by the caller
+     * (executeBatchedGatePhase), resulting in efficient resource usage.
      *
      * @param accessControl the access and usage control plugin (raw type due to plugin system)
-     * @param accessRequests the list of access requests to process
+     * @param accessRequests the list of access requests to process (batch size is pre-limited)
      * @return a list of AccessResponse objects corresponding to each access request
      * @throws DSCExecuteException if any access request fails during processing
      */
@@ -208,11 +283,7 @@ public class DSCExecutor {
             AccessAndUsageControl accessControl, List<AccessRequest> accessRequests)
             throws DSCExecuteException {
 
-        LOGGER.debug(
-                "Executing access requests with "
-                        + MAX_CONCURRENT_ACCESS_REQUESTS
-                        + " concurrent threads");
-        final Semaphore semaphore = new Semaphore(MAX_CONCURRENT_ACCESS_REQUESTS);
+        LOGGER.debug("Executing {} access requests in parallel", accessRequests.size());
 
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Future<AccessResponse>> futures = new ArrayList<>();
@@ -220,26 +291,25 @@ public class DSCExecutor {
             for (AccessRequest accessRequest : accessRequests) {
                 Future<AccessResponse> future =
                         executor.submit(
-                                () -> {
-                                    semaphore.acquire();
-                                    try {
-                                        return accessControl.retrieveAccessInformation(
-                                                accessRequest);
-                                    } finally {
-                                        semaphore.release();
-                                    }
-                                });
+                                () -> accessControl.retrieveAccessInformation(accessRequest));
                 futures.add(future);
             }
 
             // Collect results
             List<AccessResponse> accessResponses = new ArrayList<>();
             for (Future<AccessResponse> future : futures) {
-                accessResponses.add(future.get());
+                try {
+                    accessResponses.add(future.get());
+                } catch (ExecutionException e) {
+                    Throwable cause = e.getCause();
+                    throw new DSCExecuteException(
+                            "Error retrieving access info: " + cause.getMessage(), cause);
+                }
             }
             return accessResponses;
-        } catch (InterruptedException | ExecutionException e) {
-            throw new DSCExecuteException("Error retrieving access info: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new DSCExecuteException("Execution interrupted: " + e.getMessage(), e);
         }
     }
 
@@ -253,19 +323,20 @@ public class DSCExecutor {
      * @param gate the gate plugin instance
      * @param gateRequests the list of gate requests to process
      * @param converterCapabilities the converter capabilities containing supported formats
+     * @param maxGateRequests the maximum number of concurrent gate requests
      * @return a list of GateResponse objects corresponding to each gate request
      * @throws DSCExecuteException if any gate request fails or encounters a format not supported
      *     exception
      */
     private List<GateResponse> executeGatePhase(
-            Gate gate, List<GateRequest> gateRequests, ConverterCapabilities converterCapabilities)
+            Gate gate,
+            List<GateRequest> gateRequests,
+            ConverterCapabilities converterCapabilities,
+            int maxGateRequests)
             throws DSCExecuteException {
 
-        LOGGER.debug(
-                "Executing gate requests with "
-                        + MAX_CONCURRENT_GATE_REQUESTS
-                        + " concurrent threads");
-        final Semaphore semaphore = new Semaphore(MAX_CONCURRENT_GATE_REQUESTS);
+        LOGGER.debug("Executing gate requests with " + maxGateRequests + " concurrent threads");
+        final Semaphore semaphore = new Semaphore(maxGateRequests);
 
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Future<GateResponse>> futures = new ArrayList<>();
@@ -293,11 +364,18 @@ public class DSCExecutor {
             // Collect results
             List<GateResponse> gateResponses = new ArrayList<>();
             for (Future<GateResponse> future : futures) {
-                gateResponses.add(future.get());
+                try {
+                    gateResponses.add(future.get());
+                } catch (ExecutionException e) {
+                    Throwable cause = e.getCause();
+                    throw new DSCExecuteException(
+                            "Error executing gate requests: " + cause.getMessage(), cause);
+                }
             }
             return gateResponses;
-        } catch (InterruptedException | ExecutionException e) {
-            throw new DSCExecuteException("Error executing gate requests: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new DSCExecuteException("Execution interrupted: " + e.getMessage(), e);
         }
     }
 }

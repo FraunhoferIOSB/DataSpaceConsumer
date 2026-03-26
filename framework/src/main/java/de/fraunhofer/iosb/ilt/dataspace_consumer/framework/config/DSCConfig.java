@@ -31,6 +31,7 @@ public class DSCConfig {
     private DSCComponentConfig adapter;
     private TriggerConfig trigger;
     private int timeout;
+    private MxPortExecutionConfig execution = new MxPortExecutionConfig();
 
     /**
      * Returns the configured name of this MX-Port.
@@ -129,5 +130,23 @@ public class DSCConfig {
 
     public void setTimeout(int timeout) {
         this.timeout = timeout;
+    }
+
+    /**
+     * Returns the execution configuration for this MX-Port.
+     *
+     * @return the execution configuration
+     */
+    public MxPortExecutionConfig getExecution() {
+        return execution;
+    }
+
+    /**
+     * Sets the execution configuration for this MX-Port.
+     *
+     * @param execution the execution configuration
+     */
+    public void setExecution(MxPortExecutionConfig execution) {
+        this.execution = execution;
     }
 }

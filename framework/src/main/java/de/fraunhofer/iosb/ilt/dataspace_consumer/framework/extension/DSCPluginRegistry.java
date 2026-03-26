@@ -28,6 +28,7 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteExcepti
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.Gate;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.MxPortExecutionConfig;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,7 +186,8 @@ public class DSCPluginRegistry {
         injectConfiguration(adapter, portConfig.getAdapter());
 
         LOGGER.debug("All plugins loaded and configured for MX-Port: {}", mxPortName);
-        return new LoadedPlugins(discovery, accessControl, gate, converter, adapter);
+        return new LoadedPlugins(
+                discovery, accessControl, gate, converter, adapter, portConfig.getExecution());
     }
 
     /**
@@ -367,27 +369,32 @@ public class DSCPluginRegistry {
         private final Gate gate;
         private final Converter converter;
         private final Adapter adapter;
+        private final MxPortExecutionConfig executionConfig;
 
         /**
-         * Constructs a LoadedPlugins container with all plugin instances.
+         * Constructs a LoadedPlugins container with all plugin instances and execution
+         * configuration.
          *
          * @param discovery the Discovery plugin (may be null if optional)
          * @param accessAndUsageControl the AccessAndUsageControl plugin (non-null)
          * @param gate the Gate plugin (non-null)
          * @param converter the Converter plugin (non-null)
          * @param adapter the Adapter plugin (non-null)
+         * @param executionConfig the execution configuration for this MX-Port
          */
         public LoadedPlugins(
                 @SuppressWarnings("rawtypes") Discovery discovery,
                 AccessAndUsageControl accessAndUsageControl,
                 Gate gate,
                 Converter converter,
-                Adapter adapter) {
+                Adapter adapter,
+                MxPortExecutionConfig executionConfig) {
             this.discovery = discovery;
             this.accessAndUsageControl = accessAndUsageControl;
             this.gate = gate;
             this.converter = converter;
             this.adapter = adapter;
+            this.executionConfig = executionConfig;
         }
 
         @SuppressWarnings("rawtypes")
@@ -409,6 +416,15 @@ public class DSCPluginRegistry {
 
         public Adapter getAdapter() {
             return adapter;
+        }
+
+        /**
+         * Returns the execution configuration for this MX-Port.
+         *
+         * @return the execution configuration
+         */
+        public MxPortExecutionConfig getExecutionConfig() {
+            return executionConfig;
         }
     }
 }
