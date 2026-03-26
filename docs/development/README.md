@@ -110,3 +110,23 @@ mvnw <command>
 ..\mvnw <command>
 ```
 
+## Manually build the docker image
+Normally the docker image is built by the CI pipeline, but you can also build it locally by executing the following command from the project root:
+
+```bash
+# Build the framework module first to generate the jar file for the docker image
+cd framework
+mvn clean package
+
+# Replace "your-tag" with the desired tag for the docker image
+
+# Go to project root to build the docker image
+cd ..
+docker build -f ./framework/Dockerfile -t ghcr.io/fraunhoferiosb/dataspaceconsumer-framework:your-tag .
+
+# Login to GitHub Container Registry (if not already logged in)
+docker login ghcr.io
+
+# Push the image to GitHub Container Registry
+docker push ghcr.io/fraunhoferiosb/dataspaceconsumer-framework:your-tag
+```
