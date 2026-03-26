@@ -50,13 +50,13 @@ public class GateImpl implements Gate {
 
     public GateImpl() {}
 
-    private static final Pattern AAS_REPO_PATTERN = Pattern.compile("^aas[-_]repo");
+    private static final Pattern AAS_REPO_PATTERN = Pattern.compile("^aas[-_]repo.*");
 
-    private static final Pattern AAS_PATTERN = Pattern.compile("^aas");
+    private static final Pattern AAS_PATTERN = Pattern.compile("^aas.*");
 
-    private static final Pattern SUBMODEL_REPO_PATTERN = Pattern.compile("^submodel[-_]repo");
+    private static final Pattern SUBMODEL_REPO_PATTERN = Pattern.compile("^submodel[-_]repo.*");
 
-    private static final Pattern SUBMODEL_PATTERN = Pattern.compile("^submodel");
+    private static final Pattern SUBMODEL_PATTERN = Pattern.compile("^submodel.*");
 
     @Override
     public GateResponse getData(GateRequest gateRequest, List<GateResponseFormat> desiredFormats) {
