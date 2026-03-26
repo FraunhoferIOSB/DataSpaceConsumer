@@ -6,7 +6,7 @@ This extension writes the retrieved data to a file for testing and debugging pur
 
 ```yaml
 adapter:
-  implementation: de.fraunhofer.iosb.ilt.dataspace_consumer.console_adapter_extension.ConsoleAdapter
+  implementation: de.fraunhofer.iosb.ilt.dataspace_consumer.file_adapter_extension.FileAdapter
   config: 
     folderPath: "example-directory"                       # Path relative to the project root. 
 ```
