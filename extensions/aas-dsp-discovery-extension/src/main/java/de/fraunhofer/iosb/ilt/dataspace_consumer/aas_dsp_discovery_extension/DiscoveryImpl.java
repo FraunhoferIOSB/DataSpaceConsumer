@@ -16,23 +16,15 @@
 package de.fraunhofer.iosb.ilt.dataspace_consumer.aas_dsp_discovery_extension;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessResponse;
-import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPFilter;
-import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.config.Configurable;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.discovery.Discovery;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
@@ -57,9 +49,8 @@ import org.pf4j.Extension;
 public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
 
     private final ObjectMapper mapper;
+    private final DiscoveryRequestFactory factory;
     private OkHttpClient client;
-
-    private static final Logger LOGGER = Logger.getLogger(DiscoveryImpl.class.getName());
 
     private String baseURL;
 
@@ -71,6 +62,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
      */
     public DiscoveryImpl() {
         mapper = new ObjectMapper();
+        factory = new DiscoveryRequestFactory();
         client =
                 new OkHttpClient.Builder()
                         .connectTimeout(30, TimeUnit.SECONDS)
@@ -78,72 +70,6 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
                         .writeTimeout(30, TimeUnit.SECONDS)
                         .callTimeout(30, TimeUnit.SECONDS)
                         .build();
-    }
-
-    private static final Pattern SUBPROTOCOL_PATTERN =
-            Pattern.compile("d=([^;]+);[^;=\s]+ndpoint=([^;\"]+)");
-
-    /**
-     * has a side effect on the endpointToHrefMap
-     *
-     * @param endpoints
-     * @param result
-     * @return
-     */
-    private void extractFromEndpoints(JsonNode endpoints, List<ResultItem> result) {
-
-        if (!endpoints.isArray()) {
-            return;
-        }
-
-        for (JsonNode endpoint : endpoints) {
-
-            String interfaceType = endpoint.path("interface").asText(null);
-            JsonNode proto = endpoint.path("protocolInformation");
-
-            String href = proto.path("href").asText(null);
-            String subBody = proto.path("subprotocolBody").asText(null);
-
-            if (href == null || subBody == null) {
-                continue;
-            }
-
-            Matcher matcher = SUBPROTOCOL_PATTERN.matcher(subBody);
-            if (!matcher.find()) {
-                continue;
-            }
-
-            String assetId = matcher.group(1);
-            String dspEndpoint = matcher.group(2);
-
-            ResultItem item = new ResultItem(assetId, dspEndpoint, href, interfaceType);
-
-            result.add(item);
-        }
-    }
-
-    private List<ResultItem> getResultItems(JsonNode discoveredInfos) {
-        List<ResultItem> result = new ArrayList<>();
-        JsonNode assets = discoveredInfos.path("result");
-        if (!assets.isArray()) {
-            return result;
-        }
-
-        for (JsonNode asset : assets) {
-
-            // asset-level endpoints
-            extractFromEndpoints(asset.path("endpoints"), result);
-
-            // submodel endpoints
-            JsonNode submodels = asset.path("submodelDescriptors");
-            if (submodels.isArray()) {
-                for (JsonNode submodel : submodels) {
-                    extractFromEndpoints(submodel.path("endpoints"), result);
-                }
-            }
-        }
-
-        return result;
     }
 
     /**
@@ -159,12 +85,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
     @Override
     public AccessRequest getDiscoveryAccessRequest() throws DSCExecuteException {
 
-        DSPFilter filter =
-                new DSPFilter(
-                        "'http://purl.org/dc/terms/type'.'@id'",
-                        null,
-                        "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry");
-        return new DSPRequest(filter, baseURL + "/v3/catalog/request");
+        return factory.getDiscoveryRequest(baseURL);
     }
 
     /**
@@ -196,7 +117,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
             }
 
             ResponseBody body = response.body();
-            if (body == null) {
+            if (body.string().isBlank()) {
                 throw new IOException("Empty response body");
             }
 
@@ -228,19 +149,8 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
     public List<AccessRequest> getGateAccessRequests(JsonNode discoveredInfos)
             throws DSCExecuteException {
 
-        // we only need one access request per assetId
-        Set<String> includedAssetIDs = new HashSet<>();
-
-        return getResultItems(discoveredInfos).stream()
-                .filter(x -> includedAssetIDs.add(x.assetId()))
-                .map(
-                        x -> {
-                            DSPFilter filter =
-                                    new DSPFilter(
-                                            "https://w3id.org/edc/v0.0.1/ns/id", null, x.assetId());
-                            return (AccessRequest) new DSPRequest(filter, x.endpoint());
-                        })
-                .toList();
+        List<ResultItem> items = AasDiscoveryParser.getResults(discoveredInfos);
+        return factory.getGateAccessRequests(items);
     }
 
     /**
@@ -268,7 +178,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
             tokenMap.put((String) response.identifier(), response.token());
         }
 
-        return getResultItems(discoveredInfos).stream()
+        return AasDiscoveryParser.getResults(discoveredInfos).stream()
                 .map(
                         x -> {
                             return new GateRequest(

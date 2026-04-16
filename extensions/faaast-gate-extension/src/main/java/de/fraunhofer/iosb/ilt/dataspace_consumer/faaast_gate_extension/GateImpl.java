@@ -58,6 +58,34 @@ public class GateImpl implements Gate {
 
     private static final Pattern SUBMODEL_PATTERN = Pattern.compile("^submodel.*");
 
+    enum InterfaceType {
+        AAS_REPOSITORY,
+        AAS,
+        SUBMODEL_REPOSITORY,
+        SUBMODEL,
+        UNKNOWN;
+
+        static InterfaceType from(String value) {
+            if (value == null) return AAS_REPOSITORY;
+            if (AAS_REPO_PATTERN.matcher(value).matches()) return AAS_REPOSITORY;
+            if (AAS_PATTERN.matcher(value).matches()) return AAS;
+            if (SUBMODEL_REPO_PATTERN.matcher(value).matches()) return SUBMODEL_REPOSITORY;
+            if (SUBMODEL_PATTERN.matcher(value).matches()) return SUBMODEL;
+            return UNKNOWN;
+        }
+    }
+
+    private String normalizeUrl(String url) {
+        // faaast-client needs urls without the /shells or /submodels suffix:
+
+        if (url.endsWith("/shells")) {
+            url = url.substring(0, url.length() - 7);
+        } else if (url.endsWith("/submodels")) {
+            url = url.substring(0, url.length() - 10);
+        }
+        return url;
+    }
+
     @Override
     public GateResponse getData(GateRequest gateRequest, List<GateResponseFormat> desiredFormats) {
 
@@ -68,21 +96,14 @@ public class GateImpl implements Gate {
         try (TokenAuthenticatedHttpClient client =
                 new TokenAuthenticatedHttpClient(gateRequest.token())) {
 
-            String url = gateRequest.url();
-
-            // faaast-client needs urls without the /shells or /submodels suffix:
-            if (url.endsWith("/shells")) {
-                url = url.substring(0, url.length() - 7);
-            } else if (url.endsWith("/submodels")) {
-                url = url.substring(0, url.length() - 10);
-            }
+            String url = normalizeUrl(gateRequest.url());
 
             URI aasServerAddressUri = new URI(url);
             String interfaceType = null;
 
             Object metaInfo = gateRequest.metaInformation();
-            if (metaInfo instanceof String) {
-                interfaceType = ((String) metaInfo).toLowerCase();
+            if (metaInfo instanceof String metaString) {
+                interfaceType = metaString;
             }
 
             if (interfaceType == null || AAS_REPO_PATTERN.matcher(interfaceType).matches()) {
@@ -121,7 +142,6 @@ public class GateImpl implements Gate {
             return new GateResponse(200, GateResponseFormat.JSON, headers, payload, "");
         } catch (SerializationException exception) {
             LOGGER.severe("Failed to process JSON: " + exception.getMessage());
-
         } catch (URISyntaxException exception) {
             LOGGER.severe("Invalid AAS server URI: " + exception.getMessage());
 
