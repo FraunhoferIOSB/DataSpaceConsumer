@@ -229,7 +229,7 @@ public class EdcClient {
                 getResponseString(
                         EdcEndpointTemplates.tokenEndpoint(baseURL, transferProcessId),
                         null,
-                        "POST",
+                        "GET",
                         loggingName,
                         true);
         return parser.parseJson(
