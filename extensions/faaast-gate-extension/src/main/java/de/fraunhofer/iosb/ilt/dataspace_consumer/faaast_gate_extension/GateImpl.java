@@ -103,7 +103,7 @@ public class GateImpl implements Gate {
 
             Object metaInfo = gateRequest.metaInformation();
             if (metaInfo instanceof String metaString) {
-                interfaceType = metaString;
+                interfaceType = metaString.toLowerCase();
             }
 
             if (interfaceType == null || AAS_REPO_PATTERN.matcher(interfaceType).matches()) {

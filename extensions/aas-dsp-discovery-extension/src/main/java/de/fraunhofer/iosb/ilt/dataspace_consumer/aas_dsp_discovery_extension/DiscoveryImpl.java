@@ -117,11 +117,12 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
             }
 
             ResponseBody body = response.body();
-            if (body.string().isBlank()) {
+            String responseBodyString = body.string();
+            if (responseBodyString.isBlank()) {
                 throw new IOException("Empty response body");
             }
 
-            return mapper.readTree(body.string());
+            return mapper.readTree(responseBodyString);
 
         } catch (IOException e) {
 
