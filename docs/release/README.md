@@ -25,15 +25,17 @@ If you need to release everything at once:
 #### 1. Update all versions
 
 ```bash
-mvn versions:set -DnewVersion=1.0.0
+mvn versions:set "-DnewVersion=1.0.0"
 mvn versions:commit
 ```
 
 #### 2. Commit and tag
 
 ```bash
-git add . && git commit -m "Release version 1.0.0"
-git tag v1.0.0 && git push origin v1.0.0
+git add .
+git commit -m "Release version 1.0.0"
+git tag v1.0.0
+git push origin v1.0.0
 ```
 
 #### 3. Bump to next SNAPSHOT
@@ -41,6 +43,7 @@ git tag v1.0.0 && git push origin v1.0.0
 ```bash
 mvn versions:set -DnewVersion=1.0.1-SNAPSHOT
 mvn versions:commit
-git add . && git commit -m "Bump version to 1.0.1-SNAPSHOT"
+git add .
+git commit -m "Bump version to 1.0.1-SNAPSHOT"
 git push
 ```
