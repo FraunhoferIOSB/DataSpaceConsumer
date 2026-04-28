@@ -18,6 +18,8 @@
   <description>Collection of extensions for the Dataspace Consumer</description>
 
   <modules>
+    <module>aas-leo-discovery-extension</module>
+    <module>fx-leo-access-control-extension</module>
     <module>aas-dsp-discovery-extension</module>
     <module>console-adapter-extension</module>
     <module>faaast-gate-extension</module>
