@@ -48,4 +48,13 @@ public record GateRequest(String url, String token, Object metaInformation) {
     public GateRequest(AccessResponse accessResponse, Object metaInformation) {
         this(accessResponse.url(), accessResponse.token(), metaInformation);
     }
+
+    @Override
+    public String toString() {
+        return "GateRequest{" +
+                "token='[REDACTED]'" +
+                ", url='" + url + '\'' +
+                ", metaInformation='" + metaInformation.toString() + '\'' +
+                '}';
+    }
 }
