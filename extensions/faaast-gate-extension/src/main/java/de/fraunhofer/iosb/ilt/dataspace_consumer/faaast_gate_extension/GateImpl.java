@@ -35,6 +35,7 @@ import de.fraunhofer.iosb.ilt.faaast.client.interfaces.AASInterface;
 import de.fraunhofer.iosb.ilt.faaast.client.interfaces.AASRepositoryInterface;
 import de.fraunhofer.iosb.ilt.faaast.client.interfaces.SubmodelInterface;
 import de.fraunhofer.iosb.ilt.faaast.client.interfaces.SubmodelRepositoryInterface;
+import de.fraunhofer.iosb.ilt.faaast.service.model.api.paging.PagingInfo;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
@@ -110,7 +111,7 @@ public class GateImpl implements Gate {
 
                 AASRepositoryInterface aasRepo =
                         new AASRepositoryInterface(aasServerAddressUri, client);
-                shells.addAll(aasRepo.getAll());
+                shells.addAll(aasRepo.get(PagingInfo.ALL).getContent());
 
             } else if (AAS_PATTERN.matcher(interfaceType).matches()) {
                 AASInterface aasInterface = new AASInterface(aasServerAddressUri, client);
@@ -120,7 +121,8 @@ public class GateImpl implements Gate {
 
                 SubmodelRepositoryInterface submodelRepo =
                         new SubmodelRepositoryInterface(aasServerAddressUri, client);
-                submodels.addAll(submodelRepo.getAll());
+                submodels.addAll(submodelRepo.get(PagingInfo.ALL).getContent());
+
             } else if (SUBMODEL_PATTERN.matcher(interfaceType).matches()) {
                 SubmodelInterface submodelInterface =
                         new SubmodelInterface(aasServerAddressUri, client);
