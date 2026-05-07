@@ -35,6 +35,7 @@ mvn versions:commit
 git add .
 git commit -m "Release version 1.0.0"
 git tag v1.0.0
+git push
 git push origin v1.0.0
 ```
 
