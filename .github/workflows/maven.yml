@@ -74,7 +74,7 @@ jobs:
         if: github.ref_name == 'main'
         uses: advanced-security/maven-dependency-submission-action@v5
         with:
-          maven-args: -f ${{ inputs.pom-file }} -U
+          maven-args: -f ${{ inputs.pom-file }} -s ${{ github.workspace }}/settings.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
