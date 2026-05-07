@@ -10,6 +10,8 @@
 framework/**/resources/application-dev.yaml
 framework/**/resources/application-prod.yaml
 
+# file-adapter-extension default location payload
+framework/example-directory/*
 
 ### STS ###
 .apt_generated
