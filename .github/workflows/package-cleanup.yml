@@ -1,0 +1,61 @@
+name: Cleanup old untagged packages
+
+on:
+  # Runs daily at 2:00 AM
+  schedule:
+    - cron: '0 2 * * *'
+  # Run manually
+  workflow_dispatch:
+
+jobs:
+  delete-untagged-packages:
+    name: Delete old untagged package versions
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+      - name: Delete old untagged docker images
+        uses: actions/delete-package-versions@v5
+        with:
+            package-name: 'dataspaceconsumer-framework'
+            package-type: 'container'
+            min-versions-to-keep: 5
+            delete-only-untagged-versions: 'true'
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old Maven snapshots - parent
+        uses: actions/delete-package-versions@v5
+        with:
+            package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.parent'
+            package-type: 'maven'
+            min-versions-to-keep: 5
+            delete-only-pre-release-versions: 'true' 
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old Maven snapshots - parent
+        uses: actions/delete-package-versions@v5
+        with:
+            package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.parent'
+            package-type: 'maven'
+            min-versions-to-keep: 5
+            delete-only-pre-release-versions: 'true' 
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old Maven snapshots - bom
+        uses: actions/delete-package-versions@v5
+        with:
+            package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.bom'
+            package-type: 'maven'
+            min-versions-to-keep: 5
+            delete-only-pre-release-versions: 'true' 
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old Maven snapshots - api
+        uses: actions/delete-package-versions@v5
+        with:
+            package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.api'
+            package-type: 'maven'
+            min-versions-to-keep: 5
+            delete-only-pre-release-versions: 'true' 
+            token: ${{ secrets.GITHUB_TOKEN }}
