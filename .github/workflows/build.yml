@@ -20,52 +20,7 @@ permissions:
   contents: read
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      isTag: ${{ (github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')) && 'true' || 'false' }}
-      parent: ${{ (github.ref_name == 'main' || startsWith(github.ref, 'refs/tags/parent-v') || steps.filter.outputs.parent == 'true') && 'true' || 'false' }}
-      bom: ${{ (github.ref_name == 'main' || steps.filter.outputs.bom == 'true') && 'true' || 'false' }}
-      api: ${{ (github.ref_name == 'main' || steps.filter.outputs.api == 'true') && 'true' || 'false' }}
-      framework: ${{ (github.ref_name == 'main' || steps.filter.outputs.framework == 'true') && 'true' || 'false' }}
-      extensions: ${{ (github.ref_name == 'main' || steps.filter.outputs.extensions == 'true') && 'true' || 'false' }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v4
-        id: filter
-        if: github.ref_type != 'tag' && github.ref_name != 'main'
-        with:
-          base: ${{ github.base_ref || github.ref }}
-          filters: |
-            parent:
-              - 'pom.xml'
-              - 'license-header'
-              - '.github/workflows/build.yml'
-              - '.github/workflows/maven.yml'
-            bom:
-              - 'bom/**'
-              - '.github/workflows/build.yml'
-              - '.github/workflows/maven.yml'
-            api:
-              - 'api/**'
-              - '.github/workflows/build.yml'
-              - '.github/workflows/maven.yml'
-            framework:
-              - 'framework/**'
-              - '.github/workflows/build.yml'
-              - '.github/workflows/maven.yml'
-              - '.github/workflows/docker.yml'
-            extensions:
-              - 'extensions/**'
-              - '.github/workflows/build.yml'
-              - '.github/workflows/maven.yml'
-
   build-parent:
-    needs: changes
-    if: ${{ needs.changes.outputs.isTag == 'true' || needs.changes.outputs.parent == 'true' }}
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -78,10 +33,7 @@ jobs:
       maven-args: "-N"
 
   build-bom:
-    needs: [changes, build-parent]
-    if: |
-      always() && !failure() && !cancelled() &&
-      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.parent == 'true')
+    needs: [build-parent]
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -93,10 +45,7 @@ jobs:
       maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
 
   build-api:
-    needs: [changes, build-parent, build-bom]
-    if: |
-      always() && !failure() && !cancelled() &&
-      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
+    needs: [build-parent, build-bom]
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -108,10 +57,7 @@ jobs:
       maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
 
   build-framework:
-    needs: [changes, build-parent, build-bom, build-api]
-    if: |
-      always() && !failure() && !cancelled() &&
-      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.framework == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
+    needs: [build-parent, build-bom, build-api]
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -138,10 +84,7 @@ jobs:
       image-name: ${{ github.repository }}-framework
 
   build-extensions:
-    needs: [changes, build-parent, build-bom, build-api]
-    if: |
-      always() && !failure() && !cancelled() &&
-      (needs.changes.outputs.isTag == 'true' || needs.changes.outputs.extensions == 'true' || needs.changes.outputs.parent == 'true' || needs.changes.outputs.bom == 'true' || needs.changes.outputs.api == 'true')
+    needs: [build-parent, build-bom, build-api]
     uses: ./.github/workflows/maven.yml
     permissions:
       contents: write
@@ -156,7 +99,6 @@ jobs:
   release:
     needs:
       [
-        changes,
         build-parent,
         build-bom,
         build-api,
@@ -164,7 +106,7 @@ jobs:
         docker-framework,
         build-extensions,
       ]
-    if: needs.changes.outputs.isTag == 'true'
+    if: github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/release.yml
     permissions:
       contents: write
