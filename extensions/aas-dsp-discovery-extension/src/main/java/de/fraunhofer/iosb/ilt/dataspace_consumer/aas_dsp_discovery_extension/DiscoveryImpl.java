@@ -180,11 +180,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
         }
 
         return AasDiscoveryParser.getResults(discoveredInfos).stream()
-                .map(
-                        x -> {
-                            return new GateRequest(
-                                    x.href(), tokenMap.get(x.assetId()), x.interfaceType());
-                        })
+                .map(x -> new GateRequest(x.href(), tokenMap.get(x.assetId()), x.interfaceType()))
                 .toList();
     }
 

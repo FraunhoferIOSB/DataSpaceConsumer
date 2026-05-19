@@ -17,6 +17,7 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.faaast_gate_extension;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +50,11 @@ public class GateImpl implements Gate {
 
     private static final Logger LOGGER = Logger.getLogger(GateImpl.class.getName());
 
-    public GateImpl() {}
+    public GateImpl() {
+        // Intentionally empty: required by the PF4J extension framework which instantiates
+        // extensions via reflection. Keeping an explicit no-arg constructor improves clarity
+        // for static analysis tools (see SONAR java:S1186).
+    }
 
     private static final Pattern AAS_REPO_PATTERN = Pattern.compile("^aas[-_]repo.*");
 
@@ -139,23 +144,19 @@ public class GateImpl implements Gate {
                             .build();
 
             JsonSerializer serializer = new JsonSerializer();
-            byte[] payload = serializer.write(environment).getBytes();
+            byte[] payload = serializer.write(environment).getBytes(StandardCharsets.UTF_8);
 
             return new GateResponse(200, GateResponseFormat.JSON, headers, payload, "");
         } catch (SerializationException exception) {
-            LOGGER.severe("Failed to process JSON: " + exception.getMessage());
+            LOGGER.log(Level.SEVERE, "Failed to process JSON", exception);
         } catch (URISyntaxException exception) {
-            LOGGER.severe("Invalid AAS server URI: " + exception.getMessage());
-
+            LOGGER.log(Level.SEVERE, "Invalid AAS server URI", exception);
         } catch (ConnectivityException exception) {
-            LOGGER.severe(
-                    "Connectivity error while contacting AAS server: " + exception.getMessage());
-
+            LOGGER.log(Level.SEVERE, "Connectivity error while contacting AAS server", exception);
         } catch (StatusCodeException exception) {
-            LOGGER.severe(
-                    "Received unexpected status code from AAS server: " + exception.getMessage());
+            LOGGER.log(Level.SEVERE, "Received unexpected status code from AAS server", exception);
         } catch (Exception exception) {
-            LOGGER.severe("Unexpected exception: " + exception.getMessage());
+            LOGGER.log(Level.SEVERE, "Unexpected exception", exception);
         }
         return new GateResponse(500, GateResponseFormat.JSON, null, null, null);
     }

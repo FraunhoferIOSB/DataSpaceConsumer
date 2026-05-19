@@ -24,8 +24,7 @@ public class AasDiscoveryParser {
 
     private AasDiscoveryParser() {}
 
-    private static void extractFromEndpoints(
-            JsonNode endpoints, String domain, List<ResultItem> result) {
+    private static void extractFromEndpoints(JsonNode endpoints, List<ResultItem> result) {
 
         if (!endpoints.isArray()) {
             return;
@@ -58,10 +57,8 @@ public class AasDiscoveryParser {
 
         for (JsonNode asset : assets) {
 
-            String domain = asset.path("domain").asText(null);
-
             // only top-level endpoints exist in the new structure
-            extractFromEndpoints(asset.path("endpoints"), domain, result);
+            extractFromEndpoints(asset.path("endpoints"), result);
         }
 
         return result;

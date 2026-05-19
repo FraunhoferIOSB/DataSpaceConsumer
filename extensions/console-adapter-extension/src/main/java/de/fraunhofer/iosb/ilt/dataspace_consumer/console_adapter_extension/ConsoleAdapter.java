@@ -39,7 +39,11 @@ public class ConsoleAdapter implements Adapter {
      *
      * <p>No special initialization is required for this adapter.
      */
-    public ConsoleAdapter() {}
+    public ConsoleAdapter() {
+        // Intentionally empty: required by the PF4J extension framework which instantiates
+        // extensions via reflection. Keeping an explicit no-arg constructor improves clarity
+        // for static analysis tools (see SONAR java:S1186).
+    }
 
     /**
      * Logs the payload contained in the given ConverterResponse to the console.
@@ -64,7 +68,8 @@ public class ConsoleAdapter implements Adapter {
 
         LOG.info("=== ConsoleAdapter ===");
         LOG.info("Payload-Typ: {}", request.getType());
-        LOG.info("Payload-Inhalt:\n{}", new String(payload, StandardCharsets.UTF_8));
+        String content = new String(payload, StandardCharsets.UTF_8);
+        LOG.info("Payload-Inhalt:\n{}", content);
         LOG.info("============================");
     }
 }

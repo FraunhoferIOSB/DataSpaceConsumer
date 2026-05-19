@@ -43,21 +43,16 @@ public class AasDiscoveryParser {
             String href = proto.path("href").asText(null);
             String subBody = proto.path("subprotocolBody").asText(null);
 
-            if (href == null || subBody == null) {
-                continue;
+            if (href != null && subBody != null) {
+                Matcher matcher = SUBPROTOCOL_PATTERN.matcher(subBody);
+                if (matcher.find()) {
+                    String assetId = matcher.group(1);
+                    String dspEndpoint = matcher.group(2);
+
+                    ResultItem item = new ResultItem(assetId, dspEndpoint, href, interfaceType);
+                    result.add(item);
+                }
             }
-
-            Matcher matcher = SUBPROTOCOL_PATTERN.matcher(subBody);
-            if (!matcher.find()) {
-                continue;
-            }
-
-            String assetId = matcher.group(1);
-            String dspEndpoint = matcher.group(2);
-
-            ResultItem item = new ResultItem(assetId, dspEndpoint, href, interfaceType);
-
-            result.add(item);
         }
     }
 

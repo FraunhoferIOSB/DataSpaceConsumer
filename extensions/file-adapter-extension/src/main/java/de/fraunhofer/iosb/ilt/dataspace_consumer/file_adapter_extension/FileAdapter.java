@@ -41,7 +41,11 @@ public class FileAdapter implements Adapter, Configurable {
      *
      * <p>No special initialization is required for this adapter.
      */
-    public FileAdapter() {}
+    public FileAdapter() {
+        // Intentionally empty: required by the PF4J extension framework which instantiates
+        // extensions via reflection. Keeping an explicit no-arg constructor improves clarity
+        // for static analysis tools (see SONAR java:S1186).
+    }
 
     private String payladTypeToExtension(ConverterPayloadType type) {
         if (type == null) {

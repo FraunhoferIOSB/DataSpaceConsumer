@@ -18,6 +18,8 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.rest_adapter_extension;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
@@ -33,12 +35,17 @@ import org.pf4j.Extension;
 public class RestAdapter implements Adapter, Configurable {
     private String endpointUrl;
 
-    public RestAdapter() {}
+    public RestAdapter() {
+        // Intentionally empty: required by the PF4J extension framework which instantiates
+        // extensions via reflection. Keeping an explicit no-arg constructor improves clarity
+        // for static analysis tools (see SONAR java:S1186).
+    }
 
     @Override
     public void adapt(ConverterResponse request) throws DSCExecuteException {
         try {
-            URL url = new URL(endpointUrl);
+
+            URL url = new URI(endpointUrl).toURL();
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
@@ -56,6 +63,8 @@ public class RestAdapter implements Adapter, Configurable {
             }
         } catch (IOException e) {
             throw new DSCExecuteException("Failed to send REST request to " + endpointUrl, e);
+        } catch (URISyntaxException e) {
+            throw new DSCExecuteException("Invalid URI syntax: " + endpointUrl, e);
         }
     }
 
