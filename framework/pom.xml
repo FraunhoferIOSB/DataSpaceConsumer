@@ -23,8 +23,8 @@
     <maven.assembly.plugin.version>3.8.0</maven.assembly.plugin.version>
     <maven.compiler.version>3.15.0</maven.compiler.version>
 
-    <dataspace_consumer.bom.version>0.0.2-SNAPSHOT</dataspace_consumer.bom.version>
-    <dataspace_consumer.api.version>0.0.2-SNAPSHOT</dataspace_consumer.api.version>
+    <dataspace_consumer.bom.version>0.1.1-SNAPSHOT</dataspace_consumer.bom.version>
+    <dataspace_consumer.api.version>0.1.1-SNAPSHOT</dataspace_consumer.api.version>
 
     <spring.boot.version>4.0.4</spring.boot.version>
   </properties>
