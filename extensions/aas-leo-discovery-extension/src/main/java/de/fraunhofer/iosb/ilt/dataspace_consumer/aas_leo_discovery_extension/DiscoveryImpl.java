@@ -77,7 +77,17 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
                         .build();
     }
 
-    /** Leo discovery is without access control */
+    /**
+     * Return an AccessRequest describing the access required to perform discovery.
+     *
+     * <p>For the LEO discovery implementation no access control request is required; this
+     * implementation therefore returns null. Other discovery implementations may return a non-null
+     * AccessRequest (for example, a DSPRequest) describing the access that must be requested from
+     * the access control service before performing discovery.
+     *
+     * @return an AccessRequest to be sent to the access control service, or null if not required
+     * @throws DSCExecuteException if creation of the access request fails
+     */
     @Override
     public AccessRequest getDiscoveryAccessRequest() throws DSCExecuteException {
 
@@ -85,13 +95,21 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
     }
 
     /**
-     * The accessResponse in this discovery call will be ignored, as it is not needed for the
-     * request.
+     * Perform discovery by querying the LEO catalog and parsing the JSON response.
+     *
+     * <p>The provided AccessResponse parameter is ignored by this implementation because the LEO
+     * discovery endpoint does not require prior tokens for listing available assets. The method
+     * issues an HTTP GET request to the configured discovery endpoint and returns the parsed JSON
+     * payload as a Jackson JsonNode.
+     *
+     * @param accessResponse an AccessResponse from the access control service (ignored)
+     * @return the parsed discovery payload as a Jackson JsonNode
+     * @throws DSCExecuteException if the HTTP request fails or the response cannot be parsed
      */
     @Override
     public JsonNode discover(AccessResponse accessResponse) throws DSCExecuteException {
 
-        String requestUrl = String.format("%s/companies?domain=%s", this.baseURL, this.x64domain);
+        String requestUrl = String.format("%s/companies/%s", this.baseURL, this.x64domain);
         Request request = new Request.Builder().url(requestUrl).method("GET", null).build();
 
         try (Response response = client.newCall(request).execute()) {

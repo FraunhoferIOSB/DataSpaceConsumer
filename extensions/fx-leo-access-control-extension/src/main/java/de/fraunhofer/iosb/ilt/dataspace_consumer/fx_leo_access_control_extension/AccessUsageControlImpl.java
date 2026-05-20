@@ -42,13 +42,32 @@ import org.pf4j.Extension;
 
 @Extension
 /**
- * Implementation of DSP-based access and usage control that interacts with a FactoryX / EDC-style
- * policy and negotiation API.
+ * Implementation of AccessAndUsageControl that acquires access tokens from a FactoryX / EDC-style
+ * token endpoint and exchanges them at a consumer STS.
  *
- * <p>This class implements the DSPAccessAndUsageControl interface for AuthorizationContext objects
- * and the Configurable interface. It performs catalog queries, policy extraction, negotiation
- * initiation and token retrieval by calling the configured EDC endpoints using OkHttp and parsing
- * JSON responses with Jackson.
+ * <p>This extension implements the AccessAndUsageControl and Configurable interfaces. It supports
+ * the GENERIC sub-protocol and expects AccessRequest instances of type {@code GenericRequest}. The
+ * implementation performs the following high-level steps when retrieving access information:
+ *
+ * <ol>
+ *   <li>Obtain a source token using OAuth2 client credentials from the configured consumer
+ *       credential server.
+ *   <li>Exchange the source token at the configured consumer STS to obtain an FX token.
+ *   <li>Return an AccessResponse containing the original request payload as resource identifier and
+ *       the FX token as bearer token.
+ * </ol>
+ *
+ * <p>HTTP calls are performed with OkHttp. Responses are parsed via {@code ResponseParser} and
+ * tokens are cached using {@code CacheService} to avoid unnecessary token requests.
+ *
+ * <p>Required configuration keys (see {@link #setConfiguration(Map)}):
+ *
+ * <ul>
+ *   <li>{@code consumerCredentialServerUrl}
+ *   <li>{@code clientId}
+ *   <li>{@code clientSecret}
+ *   <li>{@code consumerStsUrl}
+ * </ul>
  */
 public class AccessUsageControlImpl implements AccessAndUsageControl, Configurable {
 
@@ -68,6 +87,11 @@ public class AccessUsageControlImpl implements AccessAndUsageControl, Configurab
     private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body: {1}";
     private static final String APPLICATION_URL_ENCODE = "application/x-www-form-urlencoded";
 
+    /**
+     * Create a new AccessUsageControlImpl instance.
+     *
+     * <p>Initializes the token cache, response parser and an OkHttpClient with sensible timeouts.
+     */
     public AccessUsageControlImpl() {
         cache = new CacheService();
         parser = new ResponseParser();
@@ -220,6 +244,26 @@ public class AccessUsageControlImpl implements AccessAndUsageControl, Configurab
         return fxToken;
     }
 
+    /**
+     * Retrieve access information (token/authorization) for the given request.
+     *
+     * <p>If {@code accessRequest} is {@code null} this method returns {@code null} (used for
+     * unauthenticated discovery). For {@link GenericRequest} payloads this method:
+     *
+     * <ol>
+     *   <li>Obtains a {@code SourceToken} from the cache or requests one using the configured
+     *       client credentials.
+     *   <li>Obtains an {@code FXToken} by exchanging the {@code SourceToken} at the configured STS
+     *       (cached when possible).
+     *   <li>Returns an {@code AccessResponse} containing the request payload as resource identifier
+     *       and the FX token as bearer token.
+     * </ol>
+     *
+     * @param accessRequest the access request; may be {@code null} or a {@link GenericRequest}
+     * @return an {@link AccessResponse} containing the resource identifier and bearer token, or
+     *     {@code null} when {@code accessRequest} is {@code null}
+     * @throws DSCExecuteException when an HTTP or IO error occurs during token retrieval
+     */
     @Override
     public AccessResponse retrieveAccessInformation(AccessRequest accessRequest)
             throws DSCExecuteException {
@@ -243,6 +287,23 @@ public class AccessUsageControlImpl implements AccessAndUsageControl, Configurab
         return new AccessResponse(request.payload().asText(), fxToken.accessToken(), (Object) null);
     }
 
+    /**
+     * Set the configuration required by this extension.
+     *
+     * <p>Expected configuration keys (all required):
+     *
+     * <ul>
+     *   <li>{@code consumerCredentialServerUrl} - URL of the OAuth2 token endpoint for client
+     *       credentials
+     *   <li>{@code clientId} - OAuth2 client id used to request a source token
+     *   <li>{@code clientSecret} - OAuth2 client secret used to request a source token
+     *   <li>{@code consumerStsUrl} - URL of the consumer STS used to exchange the source token for
+     *       an FX token
+     * </ul>
+     *
+     * @param config a map containing the configuration keys
+     * @throws IllegalArgumentException if config is null or required keys are missing
+     */
     @Override
     public void setConfiguration(Map<String, Object> config) throws IllegalArgumentException {
 

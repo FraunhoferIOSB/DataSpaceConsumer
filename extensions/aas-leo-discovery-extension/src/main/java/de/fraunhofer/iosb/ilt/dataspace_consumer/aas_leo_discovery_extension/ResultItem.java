@@ -16,15 +16,21 @@
 package de.fraunhofer.iosb.ilt.dataspace_consumer.aas_leo_discovery_extension;
 
 /**
- * Immutable container holding discovery result details.
+ * Immutable container holding discovery result details for the LEO discovery extension.
  *
- * <p>Instances represent a single discovered asset endpoint returned by the AAS DSP-style catalog.
- * Each record contains the asset identifier, the DSP endpoint that should be used to request access
- * for the asset, and the href that can be used to fetch the actual asset resource via the gate.
+ * <p>Instances represent a single discovered endpoint returned by the AAS LEO discovery service.
+ * Each record contains the information required to contact or fetch the discovered resource:
  *
- * @param assetId unique identifier of the discovered asset (used in DSP filters)
- * @param endpoint DSP endpoint (URL) to which access requests for this asset should be sent
- * @param href HTTP href that can be used with GateRequest to retrieve the asset content
- * @param isSubmodel determines whether the result specifies a submodel or an asset
+ * <ul>
+ *   <li>href: HTTP URL that can be used to fetch the asset or submodel content via the Gate.
+ *   <li>interfaceType: the interface or protocol identifier for the discovered endpoint (for
+ *       example "HTTP", "MQTT" or a vendor-specific interface name).
+ * </ul>
+ *
+ * <p>The record component documentation is exposed as the accessor method documentation in the
+ * generated Javadoc (i.e. {@code href()} and {@code interfaceType()}).
+ *
+ * @param href HTTP href that can be used with GateRequest to retrieve the asset or submodel content
+ * @param interfaceType interface type or protocol identifier of the discovered endpoint
  */
 public record ResultItem(String href, String interfaceType) {}

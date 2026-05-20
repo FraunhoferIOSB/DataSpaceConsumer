@@ -94,11 +94,13 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
      *
      * <p>The AccessResponse provides the URL and the authorization token which are used to perform
      * a GET request. A successful HTTP response body is parsed with Jackson and returned as a
-     * JsonNode. Any IO or parsing error is wrapped in a RuntimeException.
+     * {@link JsonNode}. On HTTP errors, empty responses, I/O failures or JSON parsing errors a
+     * {@link DSCExecuteException} is thrown containing a descriptive message.
      *
      * @param accessResponse the AccessResponse containing the discovery URL and authorization token
      * @return the parsed discovery payload as a JsonNode
-     * @throws RuntimeException if the HTTP request fails or the response cannot be parsed
+     * @throws DSCExecuteException if the HTTP request fails, the response body is empty, or the
+     *     response cannot be parsed
      */
     @Override
     public JsonNode discover(AccessResponse accessResponse) throws DSCExecuteException {

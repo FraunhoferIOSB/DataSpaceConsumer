@@ -46,10 +46,30 @@ import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultEnvironment;
 import org.pf4j.Extension;
 
 @Extension
+/**
+ * Implementation of the Gate API that fetches Asset Administration Shells (AAS) and Submodels from
+ * a remote FA³ST server using the faaast-client library.
+ *
+ * <p>This class is exposed as a PF4J extension and implements {@link
+ * de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.Gate} so it can be discovered and invoked by
+ * the DataSpaceConsumer framework.
+ *
+ * <p>The Gate determines which FA³ST interface to call based on the GateRequest.metaInformation()
+ * value. Recognized interface identifiers are those starting with "aas-repo", "aas",
+ * "submodel-repo" and "submodel" (case-insensitive). If metaInformation is null or matches the AAS
+ * repository pattern, all shells are requested from the AAS repository endpoint. The returned
+ * AAS/Submodel objects are serialized to JSON and returned as the GateResponse payload.
+ */
 public class GateImpl implements Gate {
 
     private static final Logger LOGGER = Logger.getLogger(GateImpl.class.getName());
 
+    /**
+     * Public no-argument constructor required by the PF4J extension framework.
+     *
+     * <p>PF4J instantiates extensions via reflection; keeping an explicit no-arg constructor
+     * improves clarity for static analysis tools and makes the extension lifecycle explicit.
+     */
     public GateImpl() {
         // Intentionally empty: required by the PF4J extension framework which instantiates
         // extensions via reflection. Keeping an explicit no-arg constructor improves clarity
@@ -92,6 +112,31 @@ public class GateImpl implements Gate {
         return url;
     }
 
+    /**
+     * Fetch data from a FA³ST AAS server and return it as a GateResponse.
+     *
+     * <p>The method inspects {@code gateRequest.metaInformation()} to decide which FA³ST interface
+     * to call. Supported meta information values (case insensitive) are:
+     *
+     * <ul>
+     *   <li>"aas-repo*" - fetch all Asset Administration Shells from an AAS repository
+     *   <li>"aas*" - fetch a single Asset Administration Shell
+     *   <li>"submodel-repo*" - fetch all Submodels from a Submodel repository
+     *   <li>"submodel*" - fetch a single Submodel
+     * </ul>
+     *
+     * If {@code metaInformation} is {@code null} the implementation defaults to treating the
+     * endpoint as an AAS repository and attempts to fetch all shells.
+     *
+     * <p>The retrieved AAS/Submodel objects are serialized to JSON using the aas4j {@link
+     * JsonSerializer} and returned with a 200 status code on success. If any error occurs a 500
+     * response with empty payload is returned and the exception is logged.
+     *
+     * @param gateRequest the request describing the target URL and authentication token
+     * @param desiredFormats a list of desired response formats (currently ignored; this
+     *     implementation always returns JSON)
+     * @return a {@link GateResponse} containing the serialized environment in JSON
+     */
     @Override
     public GateResponse getData(GateRequest gateRequest, List<GateResponseFormat> desiredFormats) {
 

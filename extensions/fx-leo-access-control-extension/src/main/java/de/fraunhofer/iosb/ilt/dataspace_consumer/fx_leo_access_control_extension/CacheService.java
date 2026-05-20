@@ -23,6 +23,24 @@ import com.github.benmanes.caffeine.cache.Expiry;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_leo_access_control_extension.tokens.FXToken;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_leo_access_control_extension.tokens.SourceToken;
 
+/**
+ * Simple in-memory cache for source tokens and derived FX tokens.
+ *
+ * <p>This service uses Caffeine caches to store two mappings:
+ *
+ * <ul>
+ *   <li>clientId (String) -> SourceToken
+ *   <li>SourceToken -> FXToken
+ * </ul>
+ *
+ * <p>Both caches apply an expiry policy based on the token's {@code expiresIn()} value. If {@code
+ * expiresIn()} is provided, the stored entry will expire {@code expiresIn - 10} seconds after
+ * creation to leave a small safety margin for subsequent operations. If {@code expiresIn()} is null
+ * or cannot be parsed, the entry is expired immediately.
+ *
+ * <p>All tokens are stored as provided; this class does not validate token contents. The caches
+ * provided by Caffeine are thread-safe.
+ */
 public class CacheService {
 
     private Cache<String, SourceToken> sourceTokenCache =
@@ -101,18 +119,42 @@ public class CacheService {
                             })
                     .build();
 
+    /**
+     * Retrieve a cached FXToken for the given SourceToken.
+     *
+     * @param sourceToken the source token used as cache key
+     * @return the cached FXToken, or {@code null} if none is present
+     */
     public FXToken getFXToken(SourceToken sourceToken) {
         return fxTokenCache.getIfPresent(sourceToken);
     }
 
+    /**
+     * Put an FXToken into the cache associated with the provided SourceToken.
+     *
+     * @param sourceToken the source token used as cache key
+     * @param fxToken the FX token to store
+     */
     public void putFXToken(SourceToken sourceToken, FXToken fxToken) {
         fxTokenCache.put(sourceToken, fxToken);
     }
 
+    /**
+     * Retrieve a cached SourceToken for the given client identifier.
+     *
+     * @param clientId the client identifier used as cache key
+     * @return the cached SourceToken, or {@code null} if none is present
+     */
     public SourceToken getSourceToken(String clientId) {
         return sourceTokenCache.getIfPresent(clientId);
     }
 
+    /**
+     * Put a SourceToken into the cache associated with the given client identifier.
+     *
+     * @param clientId the client identifier used as cache key
+     * @param sourceToken the source token to store
+     */
     public void putSourceToken(String clientId, SourceToken sourceToken) {
         sourceTokenCache.put(clientId, sourceToken);
     }

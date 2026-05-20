@@ -20,6 +20,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * Parser for AAS discovery responses in LEO/AAS format.
+ *
+ * <p>This utility class extracts endpoint information from discovery JSON documents and converts
+ * them to a list of {@link ResultItem} instances. The class is non-instantiable and provides static
+ * helper methods.
+ */
 public class AasDiscoveryParser {
 
     private AasDiscoveryParser() {}
@@ -47,6 +54,16 @@ public class AasDiscoveryParser {
         }
     }
 
+    /**
+     * Extracts discovery result items from a discovery JSON payload.
+     *
+     * <p>The method expects the discoveredInfos JSON to contain an array named "data" with asset
+     * entries. For each asset it extracts top-level endpoints and converts them to {@link
+     * ResultItem} instances. If the expected structure is not present an empty list is returned.
+     *
+     * @param discoveredInfos JSON node containing discovery information
+     * @return list of {@link ResultItem} extracted from the input JSON
+     */
     public static List<ResultItem> getResults(JsonNode discoveredInfos) {
         List<ResultItem> result = new ArrayList<>();
 

@@ -51,10 +51,14 @@ public record GateRequest(String url, String token, Object metaInformation) {
 
     @Override
     public String toString() {
-        return "GateRequest{" +
-                "token='[REDACTED]'" +
-                ", url='" + url + '\'' +
-                ", metaInformation='" + metaInformation.toString() + '\'' +
-                '}';
+        return "GateRequest{"
+                + "token='[REDACTED]'"
+                + ", url='"
+                + url
+                + '\''
+                + ", metaInformation='"
+                + metaInformation.toString()
+                + '\''
+                + '}';
     }
 }

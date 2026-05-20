@@ -22,11 +22,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 
+/**
+ * Utility class to parse JSON responses from the FX LEO services.
+ *
+ * <p>This class centralizes JSON parsing using Jackson's {@link ObjectMapper}. It provides a
+ * functional {@link JsonSupplier} that allows parsing operations which may throw {@link
+ * JsonProcessingException} and a helper method that converts those exceptions into {@link
+ * de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException}.
+ */
 public class ResponseParser {
 
     private static final Logger LOGGER = Logger.getLogger(ResponseParser.class.getName());
     private final ObjectMapper mapper;
 
+    /** Create a new ResponseParser with a default {@link ObjectMapper}. */
     public ResponseParser() {
         this.mapper = new ObjectMapper();
     }
@@ -41,10 +50,25 @@ public class ResponseParser {
         T get() throws JsonProcessingException;
     }
 
+    /**
+     * Get the Jackson {@link ObjectMapper} used by this parser.
+     *
+     * @return the ObjectMapper instance
+     */
     public ObjectMapper getObjectMapper() {
         return mapper;
     }
 
+    /**
+     * Execute a JSON parsing operation that may throw {@link JsonProcessingException} and convert
+     * parsing failures into {@link DSCExecuteException}.
+     *
+     * @param <T> the type returned by the parsing operation
+     * @param parsingOperation a supplier performing the parsing and returning the result
+     * @param requestName a descriptive name used in error and debug messages
+     * @return the parsed result
+     * @throws DSCExecuteException if JSON parsing fails
+     */
     public <T> T parseJson(JsonSupplier<T> parsingOperation, String requestName)
             throws DSCExecuteException {
         try {
