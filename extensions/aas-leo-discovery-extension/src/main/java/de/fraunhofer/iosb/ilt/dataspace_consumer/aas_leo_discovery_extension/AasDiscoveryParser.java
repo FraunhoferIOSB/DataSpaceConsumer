@@ -67,15 +67,15 @@ public class AasDiscoveryParser {
     public static List<ResultItem> getResults(JsonNode discoveredInfos) {
         List<ResultItem> result = new ArrayList<>();
 
-        JsonNode assets = discoveredInfos.path("data");
-        if (!assets.isArray()) {
-            return result;
-        }
+        JsonNode assets = discoveredInfos.path("result");
+        if (assets.isArray()) {
+            for (JsonNode asset : assets) {
 
-        for (JsonNode asset : assets) {
-
-            // only top-level endpoints exist in the new structure
-            extractFromEndpoints(asset.path("endpoints"), result);
+                // only top-level endpoints exist in the new structure
+                extractFromEndpoints(asset.path("endpoints"), result);
+            }
+        } else {
+            extractFromEndpoints(assets.path("endpoints"), result);
         }
 
         return result;
