@@ -46,14 +46,14 @@ The architecture of the “Data Space Consumer” is modular and allows differen
 | Name                                                                     | Description                                                                                                                                                                     | Status | Can be used for  |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
 | [aas-dsp-discovery-extension](./extensions/aas-dsp-discovery-extension/) | Conform to [ADR 002 – Cross-Company Authorization and Discovery](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery) | ✅      | Hercules MX-Port |
-| [aas-leo-discovery-extension](./extensions/aas-leo-discovery-extension/) | Discovers AAS data via a LEO-based discovery service | ✅      | Leo MX-Port |
+| [aas-leo-discovery-extension](./extensions/aas-leo-discovery-extension/) | Discovers AAS data via a Leo-based discovery service | ✅      | Leo MX-Port |
 
 
 ### Access & Usage Control 
 | Name                                                                                         | Description                                                                                                                                                                                                                                                                                                                                                    | Status | Can be used for  |
 |----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
 | [fx-edc-access-usage-control-extension](./extensions/fx-edc-access-usage-control-extension/) | Client which use the [Facotry-X EDC](https://github.com/factory-x-contributions/factoryx-edc) for access control, conform to [ADR 003](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication) and [ADR 009](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp) | ✅      | Hercules MX-Port |
-| [fx-leo-access-control-extension](./extensions/fx-leo-access-control-extension) | Conform to the Factory-X LEO access control  | ✅      | Leo MX-Port |
+| [fx-leo-access-control-extension](./extensions/fx-leo-access-control-extension) | Conform to the Factory-X Leo access control  | ✅      | Leo MX-Port |
 
 ### Gate
 | Name                                                         | Description                                                                                 | Status | Can be used for                  |
@@ -118,7 +118,26 @@ Based on the consumers identity, the contract can be negotiated.
 The final step is the actual **data transfer**, after the transfer process has started. The figure shows the standard HTTP pull mechanism, where the Data Space Consumer receives an access token from the provider which is then used to access the provided resource. In the current setup, the **access is controlled by the data plane of the provider**, i.e., the **data plane acts as a proxy** that receives the request (**step T1**) and forwards it to the actual data source (**step T2a** to the DTR or **step T2b** to the AAS repository).
 
 ### Leo Extension
-Leo extension is in planning. Contributions are highly welcome.
+Data exchange via MX-Port Leo for secure data exchange via [AAS Security](https://industrialdigitaltwin.org/content-hub/aasspecifications/specification-of-the-asset-administration-shell-part-4-security-idta-number-01004) using the Asset Administration Shell (AAS) as the data model. 
+
+#### Data exchange steps via the MX-Port Leo
+![Data exchange via MX-Port Leo](docs/src/images/DataExchangeLeo.png)
+
+The figure shows the interaction between a data consumer and a data provider.
+- S0: Preliminary step: the Data Consumer needs to register itself at the trusted list when joining the data space and the Data Provider needs to register its endpoints at the company lookup service when joining the data space.
+
+Interaction for discovery and secure data exchange:
+- S1: The Data Space Consumer component of the Data Consumer sends a request to the Company Lookup service. The request contains the domain of a Data Provider registered in the data space and the Company Lookup service returns the available endpoints of the corresponding Data Provider that the Data Consumer can then use to request data from (Discovery).
+- S2: The Data Space Consumer requests and gets a consumer-specific source token from the Data Consumer’s own Identity Provider server, e.g., using the OAuth2 client credentials grant.
+- S3: The Data Space Consumer exchanges the consumer-specific source token for a standardized Factory-X (FX) token using its own Security Token Service (STS).
+- S4: The Data Space Consumer sends a request to the Provider Gateway including the previously obtained FX token.
+- S5: The Provider Gateway triggers a token exchange request for the FX token at its own Security Token Service (STS).
+- S6: The provider STS validates the FX token, which entails syntax checks (i.e., FX token structure) as well as issuer verification. For the issuer verification, the provider STS checks the FX token against the trusted list of the data space.
+- S7: After successful validation of the FX token (i.e., issuer verification based on the Trusted List plus the key data for the issuer) the provider STS issues an access token for the provider AAS.
+- S8: The Provider Gateway redirects the initial request together with the access token to the provider AAS.
+- S9: The Provider Gateway forwards the AAS response to the Data Space Consumer.
+
+Note that the Provider Gateway is an optional component that helps to hide the details of the token handling from the provider AAS server. When no gateway is used, the AAS server would have to perform the token handling steps on its own. In a similar fashion, a gateway could also be used on the consumer side to hide the token handling steps from the Data Space Consumer.
 
 ### Orion Extension
 Orion extension is under consideration. Contributions are highly welcome.
