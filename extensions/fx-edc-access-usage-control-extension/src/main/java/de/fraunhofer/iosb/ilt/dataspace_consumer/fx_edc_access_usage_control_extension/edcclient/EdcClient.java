@@ -40,6 +40,13 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+/**
+ * HTTP client for interacting with an EDC (Eclipse DataSpace Connector) management API.
+ *
+ * <p>This class provides convenience methods to query the catalog for policies, initiate contract
+ * negotiations, retrieve available EDRs, fetch access tokens (EDR) and poll the negotiation state.
+ * It handles HTTP requests, response validation and JSON parsing via {@code EdcClientParser}.
+ */
 public class EdcClient {
 
     private String baseURL;
@@ -49,6 +56,17 @@ public class EdcClient {
     private OkHttpClient client;
     private final EdcClientParser parser;
 
+    /**
+     * Create a new EdcClient instance.
+     *
+     * @param baseURL base URL of the EDC management API (must not be null)
+     * @param counterPartyId identifier of the counter-party (must not be null)
+     * @param counterPartyAddress address/URL of the counter-party connector (must not be null)
+     * @param apiKey API key used for authenticating against the EDC management API (must not be
+     *     null)
+     * @param httpClient optional custom OkHttpClient. If {@code null}, a default client will be
+     *     created
+     */
     public EdcClient(
             String baseURL,
             String counterPartyId,
@@ -160,6 +178,17 @@ public class EdcClient {
         return responseBodyString;
     }
 
+    /**
+     * Fetches the policy (InitData) for the supplied DSP request by querying the EDC catalog.
+     *
+     * <p>The method builds a catalog query from the filter contained in the {@code dspRequest} and
+     * sends it to the EDC management API. The response is parsed into an {@link InitData}
+     * representation.
+     *
+     * @param dspRequest request containing DSP filters used for the catalog query
+     * @return parsed {@link InitData} describing the policy and any relevant metadata
+     * @throws DSCExecuteException on HTTP errors, timeouts or JSON parsing failures
+     */
     public InitData fetchPolicy(DSPRequest dspRequest) throws DSCExecuteException {
 
         String loggingName = "policy";
@@ -180,6 +209,17 @@ public class EdcClient {
         return parser.parsePolicy(root);
     }
 
+    /**
+     * Initiates a contract negotiation at the counter-party using the provided init data.
+     *
+     * <p>The contained policy from {@code initData} will be sent to the counter-party via the EDC
+     * contract negotiation endpoint. The initial negotiation response is parsed into an {@link
+     * InitNegotiationDTO} containing at least the negotiation id.
+     *
+     * @param initData initialization data containing the policy to negotiate
+     * @return {@link InitNegotiationDTO} with information about the initiated negotiation
+     * @throws DSCExecuteException on HTTP errors, timeouts or JSON parsing failures
+     */
     public InitNegotiationDTO initiateNegotiation(InitData initData) throws DSCExecuteException {
 
         String loggingName = "negotiation";
@@ -204,6 +244,14 @@ public class EdcClient {
         return initNegotiationDTO;
     }
 
+    /**
+     * Queries the EDC for available EDRs (endpoint data references) for the given asset id.
+     *
+     * @param assetId asset identifier to query EDRs for
+     * @return list of {@link AvailableEdrDTO} describing available EDRs (may be empty)
+     * @throws DSCExecuteException on HTTP or parsing errors (thrown as runtime exception by
+     *     helpers)
+     */
     public List<AvailableEdrDTO> getAvailableEDRResponse(String assetId) {
         String loggingName = "available EDRs";
         String requestBodyString = EdcRequestTemplates.availableEdrQuery(assetId);
@@ -223,6 +271,14 @@ public class EdcClient {
                 loggingName);
     }
 
+    /**
+     * Fetches an EDR (access token) for the given transfer process id.
+     *
+     * @param transferProcessId transfer process identifier used to locate the token
+     * @return parsed {@link EdrDTO} containing the access token and metadata
+     * @throws DSCExecuteException on HTTP or parsing errors (thrown as runtime exception by
+     *     helpers)
+     */
     public EdrDTO fetchToken(String transferProcessId) {
         String loggingName = "token";
         String responseBodyString =
@@ -237,6 +293,15 @@ public class EdcClient {
                 loggingName);
     }
 
+    /**
+     * Retrieves the current negotiation state for the negotiation referenced in the {@link
+     * AuthorizationContext}.
+     *
+     * @param context authorization context containing the negotiation id to poll
+     * @return {@link NegotiationStateDTO} representing the current negotiation state
+     * @throws DSCExecuteException on HTTP or parsing errors (thrown as runtime exception by
+     *     helpers)
+     */
     public NegotiationStateDTO getNegotiationState(AuthorizationContext context) {
         String loggingName = "negotiation status";
         String responseBodyString =

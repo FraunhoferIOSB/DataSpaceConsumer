@@ -39,6 +39,18 @@ import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.xml.XmlDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Environment;
 
+/**
+ * Utility class to convert a collection of GateResponse objects into a single wrapped JSON payload
+ * containing an array of AAS Environment objects.
+ *
+ * <p>The class supports deserializing GateResponse payloads in several formats (JSON, XML and AASX
+ * variants) into {@link org.eclipse.digitaltwin.aas4j.v3.model.Environment} instances using the
+ * respective deserializers from the AAS SDK and then produces a JSON object with a top-level
+ * property "environments" that contains the array of deserialized environments.
+ *
+ * <p>Unsupported or unimplemented GateResponse formats (for example RDF or multipart/form-data)
+ * will result in an {@link UnsupportedOperationException} when encountered during deserialization.
+ */
 public class GateResponsesToWrappedJson {
 
     private final JsonDeserializer jsonDeserializer = new JsonDeserializer();
@@ -46,6 +58,34 @@ public class GateResponsesToWrappedJson {
     private final JsonSerializer jsonSerializer = new JsonSerializer();
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Convert a list of GateResponse objects into a single JSON payload.
+     *
+     * <p>Each non-null GateResponse with a non-empty payload and a present {@link
+     * de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponseFormat} is deserialized into
+     * an AAS {@link org.eclipse.digitaltwin.aas4j.v3.model.Environment} using the appropriate
+     * deserializer for its format. The resulting environments are collected and serialized into a
+     * JSON object of the form:
+     *
+     * <pre>
+     * {
+     *   "environments": [ ... ]
+     * }
+     * </pre>
+     *
+     * The returned {@link
+     * de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterResponse} contains this JSON
+     * as bytes and uses the {@link
+     * de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterPayloadType#JSON} payload
+     * type.
+     *
+     * @param responses list of GateResponse objects to convert; must not be null
+     * @return a ConverterResponse containing the wrapped JSON payload
+     * @throws UnsupportedOperationException if the provided responses list is null or if an
+     *     encountered GateResponseFormat is explicitly marked as unsupported by this utility
+     * @throws de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException if an
+     *     unexpected error occurs during deserialization or serialization
+     */
     public ConverterResponse wrapAllAsJsonObject(List<GateResponse> responses)
             throws UnsupportedOperationException {
         if (responses == null) {

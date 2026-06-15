@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.fraunhofer.iosb.ilt.dataspace_consumer.aas_dsp_discovery_extension;
+package de.fraunhofer.iosb.ilt.dataspace_consumer.aas_leo_discovery_extension;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,10 +52,12 @@ import org.pf4j.Extension;
 public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
 
     private final ObjectMapper mapper;
-    private final DiscoveryRequestFactory factory;
     private OkHttpClient client;
+    private DiscoveryRequestFactory factory;
+    private static final Logger LOGGER = Logger.getLogger(DiscoveryImpl.class.getName());
 
     private String baseURL;
+    private String x64domain;
 
     /**
      * Constructs a new DiscoveryImpl instance.
@@ -73,44 +78,39 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
     }
 
     /**
-     * Build and return the AccessRequest that should be used to perform the discovery call against
-     * the configured catalog service.
+     * Return an AccessRequest describing the access required to perform discovery.
      *
-     * <p>The request is represented as a DSPRequest with a filter that limits results to Digital
-     * Twin Registry entries and targets the configured catalog endpoint (baseURL +
-     * "/v3/catalog/request").
+     * <p>For the LEO discovery implementation no access control request is required; this
+     * implementation therefore returns null. Other discovery implementations may return a non-null
+     * AccessRequest (for example, a DSPRequest) describing the access that must be requested from
+     * the access control service before performing discovery.
      *
-     * @return an AccessRequest (DSPRequest) suitable for discovery
+     * @return an AccessRequest to be sent to the access control service, or null if not required
+     * @throws DSCExecuteException if creation of the access request fails
      */
     @Override
     public AccessRequest getDiscoveryAccessRequest() throws DSCExecuteException {
 
-        return factory.getDiscoveryRequest(baseURL);
+        return null;
     }
 
     /**
-     * Perform the discovery HTTP request using the provided AccessResponse and parse the response
-     * body as JSON.
+     * Perform discovery by querying the LEO catalog and parsing the JSON response.
      *
-     * <p>The AccessResponse provides the URL and the authorization token which are used to perform
-     * a GET request. A successful HTTP response body is parsed with Jackson and returned as a
-     * {@link JsonNode}. On HTTP errors, empty responses, I/O failures or JSON parsing errors a
-     * {@link DSCExecuteException} is thrown containing a descriptive message.
+     * <p>The provided AccessResponse parameter is ignored by this implementation because the LEO
+     * discovery endpoint does not require prior tokens for listing available assets. The method
+     * issues an HTTP GET request to the configured discovery endpoint and returns the parsed JSON
+     * payload as a Jackson JsonNode.
      *
-     * @param accessResponse the AccessResponse containing the discovery URL and authorization token
-     * @return the parsed discovery payload as a JsonNode
-     * @throws DSCExecuteException if the HTTP request fails, the response body is empty, or the
-     *     response cannot be parsed
+     * @param accessResponse an AccessResponse from the access control service (ignored)
+     * @return the parsed discovery payload as a Jackson JsonNode
+     * @throws DSCExecuteException if the HTTP request fails or the response cannot be parsed
      */
     @Override
     public JsonNode discover(AccessResponse accessResponse) throws DSCExecuteException {
 
-        Request request =
-                new Request.Builder()
-                        .url(accessResponse.url())
-                        .method("GET", null)
-                        .addHeader("Authorization", accessResponse.token())
-                        .build();
+        String requestUrl = String.format("%s/companies/%s", this.baseURL, this.x64domain);
+        Request request = new Request.Builder().url(requestUrl).method("GET", null).build();
 
         try (Response response = client.newCall(request).execute()) {
 
@@ -130,7 +130,7 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
 
             throw new DSCExecuteException(
                     "Failed to fetch or parse API response from "
-                            + accessResponse.url()
+                            + requestUrl
                             + ": "
                             + e.getMessage());
         }
@@ -175,14 +175,28 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
             List<AccessResponse> accessResponses, JsonNode discoveredInfos)
             throws DSCExecuteException {
 
-        // map assetId to token:
+        // map url to token:
         HashMap<String, String> tokenMap = new HashMap<>();
         for (AccessResponse response : accessResponses) {
-            tokenMap.put((String) response.identifier(), response.token());
+            tokenMap.put(response.url(), response.token());
         }
 
         return AasDiscoveryParser.getResults(discoveredInfos).stream()
-                .map(x -> new GateRequest(x.href(), tokenMap.get(x.assetId()), x.interfaceType()))
+                .map(
+                        x -> {
+                            String token = tokenMap.get(x.href());
+                            if (token == null) {
+                                LOGGER.log(
+                                        Level.WARNING,
+                                        "No token found for {0}",
+                                        new Object[] {x.href()});
+                            }
+                            LOGGER.log(
+                                    Level.FINE,
+                                    "Discovery endpoint found: {0}",
+                                    new Object[] {x.href()});
+                            return new GateRequest(x.href(), token, x.interfaceType());
+                        })
                 .toList();
     }
 
@@ -201,7 +215,10 @@ public class DiscoveryImpl implements Discovery<JsonNode>, Configurable {
             throw new IllegalArgumentException("Configuration must not be null");
         }
 
-        this.baseURL = config.get("baseUrl").toString();
+        this.baseURL = config.get("discoveryBaseUrl").toString();
+        String domain = config.get("domain").toString();
+        this.x64domain = Base64.getEncoder().withoutPadding().encodeToString(domain.getBytes());
+
         Object timeoutObject = config.get("timeout");
         if (timeoutObject != null) {
             int timeout = Integer.parseInt(timeoutObject.toString());

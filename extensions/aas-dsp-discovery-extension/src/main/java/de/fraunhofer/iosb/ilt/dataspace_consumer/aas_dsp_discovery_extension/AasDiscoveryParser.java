@@ -22,6 +22,22 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * Utility parser for Asset Administration Shell (AAS) DSP discovery JSON payloads.
+ *
+ * <p>Provides a simple static API to extract discovery result items from the JSON structure
+ * returned by an AAS DSP registry. The class is stateless and not instantiable.
+ *
+ * <p>The parser looks for a top-level "result" array of asset objects. For each asset it inspects
+ * the "endpoints" array and the "submodelDescriptors[*].endpoints" arrays. From each endpoint it
+ * reads "protocolInformation.subprotocolBody" and extracts the DSP asset identifier and DSP
+ * endpoint using the expected subprotocol encoding (pattern:
+ * "d=<assetId>;...ndpoint=<dspEndpoint>").
+ *
+ * <p>Only a subset of fields are returned in {@link ResultItem}: the extracted asset id, the DSP
+ * endpoint URL, the registry href and the declared interface type. If the input does not match the
+ * expected structure an empty list is returned.
+ */
 public class AasDiscoveryParser {
 
     private AasDiscoveryParser() {}
@@ -43,24 +59,39 @@ public class AasDiscoveryParser {
             String href = proto.path("href").asText(null);
             String subBody = proto.path("subprotocolBody").asText(null);
 
-            if (href == null || subBody == null) {
-                continue;
+            if (href != null && subBody != null) {
+                Matcher matcher = SUBPROTOCOL_PATTERN.matcher(subBody);
+                if (matcher.find()) {
+                    String assetId = matcher.group(1);
+                    String dspEndpoint = matcher.group(2);
+
+                    ResultItem item = new ResultItem(assetId, dspEndpoint, href, interfaceType);
+                    result.add(item);
+                }
             }
-
-            Matcher matcher = SUBPROTOCOL_PATTERN.matcher(subBody);
-            if (!matcher.find()) {
-                continue;
-            }
-
-            String assetId = matcher.group(1);
-            String dspEndpoint = matcher.group(2);
-
-            ResultItem item = new ResultItem(assetId, dspEndpoint, href, interfaceType);
-
-            result.add(item);
         }
     }
 
+    /**
+     * Parse an AAS DSP discovery JSON payload and extract discovery result items.
+     *
+     * <p>This method scans the provided discovery JSON for asset entries and their endpoints,
+     * including endpoints listed on submodel descriptors. For each endpoint it attempts to extract
+     * the following values from the protocol information's subprotocol body using a pattern match:
+     *
+     * <ul>
+     *   <li>assetId - the DSP asset identifier
+     *   <li>dspEndpoint - the DSP endpoint URL
+     *   <li>href - the resource href returned by the registry
+     *   <li>interfaceType - the interface type declared on the endpoint
+     * </ul>
+     *
+     * If the expected structure is not present or no endpoints match the pattern an empty list is
+     * returned.
+     *
+     * @param discoveredInfos the parsed discovery payload (expected to contain a "result" array)
+     * @return list of discovered {@code ResultItem} objects; empty list when no results found
+     */
     public static List<ResultItem> getResults(JsonNode discoveredInfos) {
         List<ResultItem> result = new ArrayList<>();
         JsonNode assets = discoveredInfos.path("result");
