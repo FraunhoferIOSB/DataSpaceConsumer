@@ -42,7 +42,7 @@ git push origin v1.0.0
 #### 3. Bump to next SNAPSHOT
 
 ```bash
-mvn versions:set -DnewVersion=1.0.1-SNAPSHOT
+mvn versions:set "-DnewVersion=1.0.1-SNAPSHOT"
 mvn versions:commit
 git add .
 git commit -m "Bump version to 1.0.1-SNAPSHOT"
