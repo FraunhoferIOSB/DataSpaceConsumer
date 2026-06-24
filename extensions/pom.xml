@@ -21,6 +21,7 @@
     <module>aas-leo-discovery-extension</module>
     <module>fx-leo-access-control-extension</module>
     <module>aas-dsp-discovery-extension</module>
+    <module>aas-dsp-endpoints-extension</module>
     <module>console-adapter-extension</module>
     <module>faaast-gate-extension</module>
     <module>file-adapter-extension</module>
