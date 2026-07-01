@@ -22,7 +22,7 @@
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
 
-    <dataspace_consumer.bom.version>0.1.1-SNAPSHOT</dataspace_consumer.bom.version>
+    <dataspace_consumer.bom.version>0.2.1-SNAPSHOT</dataspace_consumer.bom.version>
   </properties>
 
   <dependencyManagement>
