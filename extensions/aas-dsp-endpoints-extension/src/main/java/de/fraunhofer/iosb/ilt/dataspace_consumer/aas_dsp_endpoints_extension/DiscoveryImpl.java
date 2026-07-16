@@ -100,10 +100,23 @@ public class DiscoveryImpl implements Discovery<Void>, Configurable {
             throw new IllegalArgumentException("Configuration must not be null");
         }
 
+        Object endpointsObj = config.get("endpoints");
+
         ObjectMapper mapper = new ObjectMapper();
 
-        this.endpoints =
-                mapper.convertValue(
-                        config.get("endpoints"), new TypeReference<List<ResultItem>>() {});
+        if (endpointsObj instanceof Map<?, ?> endpointsMap) {
+
+            this.endpoints =
+                    endpointsMap.values().stream()
+                            .map(
+                                    value -> {
+                                        return mapper.convertValue(value, ResultItem.class);
+                                    })
+                            .toList();
+
+        } else {
+            this.endpoints =
+                    mapper.convertValue(endpointsObj, new TypeReference<List<ResultItem>>() {});
+        }
     }
 }
