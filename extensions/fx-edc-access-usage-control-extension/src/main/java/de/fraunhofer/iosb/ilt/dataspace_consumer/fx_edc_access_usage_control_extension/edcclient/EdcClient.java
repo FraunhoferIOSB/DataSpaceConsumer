@@ -29,7 +29,6 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subpr
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.AuthorizationContext;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.InitData;
-import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.LoggingUtil;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.AvailableEdrDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.EdrDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.InitNegotiationDTO;
@@ -84,7 +83,7 @@ public class EdcClient {
 
     private static final Logger LOGGER = Logger.getLogger(EdcClient.class.getName());
     private static final String LOG_REQUEST_MSG_FORMAT = "{0} request body: {1}";
-    private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body: {1}";
+    private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body length: {1}";
     private static final String APPLICATION_JSON = "application/json";
 
     private Response getHttpResponse(Request request, String requestName) {
@@ -156,11 +155,7 @@ public class EdcClient {
     }
 
     private String getResponseString(
-            String endpoint,
-            String body,
-            String httpMethod,
-            String loggingName,
-            boolean sensitiveLogging) {
+            String endpoint, String body, String httpMethod, String loggingName) {
         LOGGER.log(Level.FINE, LOG_REQUEST_MSG_FORMAT, new Object[] {loggingName, body});
         Request request = getHttpRequest(endpoint, httpMethod, body);
 
@@ -169,12 +164,7 @@ public class EdcClient {
         LOGGER.log(
                 Level.FINE,
                 LOG_RESPONSE_MSG_FORMAT,
-                new Object[] {
-                    loggingName,
-                    sensitiveLogging
-                            ? LoggingUtil.maskToken(responseBodyString, 10)
-                            : responseBodyString
-                });
+                new Object[] {loggingName, responseBodyString.length()});
         return responseBodyString;
     }
 
@@ -201,8 +191,7 @@ public class EdcClient {
                         EdcEndpointTemplates.catalogEndpoint(baseURL),
                         requestBodyString,
                         "POST",
-                        loggingName,
-                        false);
+                        loggingName);
         JsonNode root =
                 parser.parseJson(
                         () -> parser.getObjectMapper().readTree(responseBodyString), loggingName);
@@ -230,8 +219,7 @@ public class EdcClient {
                         EdcEndpointTemplates.contractNegotiationEndpoint(baseURL),
                         requestBodyString,
                         "POST",
-                        loggingName,
-                        false);
+                        loggingName);
         InitNegotiationDTO initNegotiationDTO =
                 parser.parseJson(
                         () ->
@@ -239,7 +227,7 @@ public class EdcClient {
                                         .readValue(responseBodyString, InitNegotiationDTO.class),
                         loggingName);
 
-        LOGGER.log(Level.FINE, "negotiation id: {0}", initNegotiationDTO.id());
+        LOGGER.log(Level.FINE, "negotiation: {0}", initNegotiationDTO);
 
         return initNegotiationDTO;
     }
@@ -260,8 +248,7 @@ public class EdcClient {
                         EdcEndpointTemplates.availableEDRsEndpoint(baseURL),
                         requestBodyString,
                         "POST",
-                        loggingName,
-                        false);
+                        loggingName);
         return parser.parseJson(
                 () ->
                         parser.getObjectMapper()
@@ -286,8 +273,7 @@ public class EdcClient {
                         EdcEndpointTemplates.tokenEndpoint(baseURL, transferProcessId),
                         null,
                         "GET",
-                        loggingName,
-                        true);
+                        loggingName);
         return parser.parseJson(
                 () -> parser.getObjectMapper().readValue(responseBodyString, EdrDTO.class),
                 loggingName);
@@ -310,15 +296,14 @@ public class EdcClient {
                                 baseURL, context.negotiationId()),
                         null,
                         "GET",
-                        loggingName,
-                        false);
+                        loggingName);
         NegotiationStateDTO negotiationStateDTO =
                 parser.parseJson(
                         () ->
                                 parser.getObjectMapper()
                                         .readValue(responseBodyString, NegotiationStateDTO.class),
                         loggingName);
-        LOGGER.log(Level.FINE, "state: {0}", negotiationStateDTO.state());
+        LOGGER.log(Level.FINE, "state: {0}", negotiationStateDTO);
         return negotiationStateDTO;
     }
 }

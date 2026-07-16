@@ -148,8 +148,7 @@ public class AccessUsageControlImpl
         String newestTransferProcessID = edr.transferProcessId();
         EdrDTO dto = client.fetchToken(newestTransferProcessID);
         cache.putToken(context, dto);
-        LOGGER.log(Level.FINE, "endpoint: {0}", dto.endpoint());
-        LOGGER.log(Level.FINE, "token: {0}", LoggingUtil.maskToken(dto.authorization(), 4));
+        LOGGER.log(Level.FINE, "EDR DTO: {0}", dto);
 
         return new AccessResponse(dto.endpoint(), dto.authorization(), context.assetId());
     }

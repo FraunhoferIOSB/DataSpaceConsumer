@@ -43,4 +43,21 @@ public record SourceToken(
          * to the JSON property "expires_in" and contains the expiry information in the format
          * provided by the server (commonly the number of seconds until expiration).
          */
-        @JsonProperty("expires_in") String expiresIn) {}
+        @JsonProperty("expires_in") String expiresIn) {
+
+    @Override
+    public String toString() {
+        return "SourceToken{"
+                + "accessToken='"
+                + redact(accessToken)
+                + '\''
+                + ", expiresIn='"
+                + expiresIn
+                + '\''
+                + '}';
+    }
+
+    private static String redact(String value) {
+        return value == null ? null : "[REDACTED]";
+    }
+}

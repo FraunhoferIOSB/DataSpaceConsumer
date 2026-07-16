@@ -37,4 +37,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record FXToken(
         @JsonProperty("access_token") String accessToken,
-        @JsonProperty("expires_in") String expiresIn) {}
+        @JsonProperty("expires_in") String expiresIn) {
+
+    @Override
+    public String toString() {
+        return "FXToken{"
+                + "accessToken='"
+                + redact(accessToken)
+                + '\''
+                + ", expiresIn='"
+                + expiresIn
+                + '\''
+                + '}';
+    }
+
+    private static String redact(String value) {
+        return value == null ? null : "[REDACTED]";
+    }
+}
