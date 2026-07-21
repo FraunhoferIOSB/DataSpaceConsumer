@@ -46,6 +46,7 @@ The architecture of the “Data Space Consumer” is modular and allows differen
 | Name                                                                     | Description                                                                                                                                                                     | Status | Can be used for  |
 |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
 | [aas-dsp-discovery-extension](./extensions/aas-dsp-discovery-extension/) | Conform to [ADR 002 – Cross-Company Authorization and Discovery](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery) | ✅      | Hercules MX-Port |
+| [aas-dsp-endpoints-extension](./extensions/aas-dsp-endpoints-extension/) | Accesses pre-configured endpoints instead of a catalogue service | ✅      | Hercules MX-Port |
 | [aas-leo-discovery-extension](./extensions/aas-leo-discovery-extension/) | Discovers AAS data via a Leo-based discovery service | ✅      | Leo MX-Port |
 
 
