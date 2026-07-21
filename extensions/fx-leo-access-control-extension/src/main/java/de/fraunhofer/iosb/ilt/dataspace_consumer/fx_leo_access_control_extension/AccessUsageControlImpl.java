@@ -84,7 +84,7 @@ public class AccessUsageControlImpl implements AccessAndUsageControl, Configurab
     private ResponseParser parser;
 
     private static final String LOG_REQUEST_MSG_FORMAT = "{0} request body: {1}";
-    private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body: {1}";
+    private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body length: {1}";
     private static final String APPLICATION_URL_ENCODE = "application/x-www-form-urlencoded";
 
     /**
@@ -160,7 +160,7 @@ public class AccessUsageControlImpl implements AccessAndUsageControl, Configurab
             LOGGER.log(
                     Level.FINE,
                     LOG_RESPONSE_MSG_FORMAT,
-                    new Object[] {requestName, LoggingUtil.maskToken(bodyString, 10)});
+                    new Object[] {requestName, bodyString.length()});
             return bodyString;
         } catch (IOException exception) {
             throw new DSCExecuteException(
@@ -202,10 +202,7 @@ public class AccessUsageControlImpl implements AccessAndUsageControl, Configurab
                                         .readValue(responseBodyString, SourceToken.class),
                         requestName);
 
-        LOGGER.log(
-                Level.FINE,
-                "source token: {0}",
-                LoggingUtil.maskToken(sourceToken.accessToken(), 5));
+        LOGGER.log(Level.FINE, "source token: {0}", sourceToken);
 
         return sourceToken;
     }
@@ -239,7 +236,7 @@ public class AccessUsageControlImpl implements AccessAndUsageControl, Configurab
                         () -> parser.getObjectMapper().readValue(responseBodyString, FXToken.class),
                         requestName);
 
-        LOGGER.log(Level.FINE, "fxToken: {0}", LoggingUtil.maskToken(fxToken.accessToken(), 5));
+        LOGGER.log(Level.FINE, "fxToken: {0}", fxToken);
 
         return fxToken;
     }

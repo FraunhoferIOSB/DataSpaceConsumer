@@ -65,6 +65,9 @@ public interface DSPAccessAndUsageControl<C> extends AccessAndUsageControl {
     @Override
     default AccessResponse retrieveAccessInformation(AccessRequest accessRequest)
             throws DSCExecuteException {
+        if (accessRequest == null) {
+            return null; // e.g. discovery needs no authentication
+        }
         if (accessRequest instanceof DSPRequest dSPRequest) {
             DSPExcecuter<C> excecuter = new DSPExcecuter<>(this);
             return excecuter.retrieveAccessInfos(dSPRequest);
