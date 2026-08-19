@@ -15,8 +15,6 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.trigger;
 
-import java.util.concurrent.CompletableFuture;
-
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
@@ -80,19 +78,14 @@ public class RestHookTrigger extends Trigger {
         }
 
         // Start executing the MX-Port asynchronously using CompletableFuture
-        CompletableFuture.runAsync(
-                () -> {
-                    execute(portConfig, portConfig.getTimeout());
-                });
-
+        execute(portConfig, portConfig.getTimeout());
         // Return HTTP 204 (No Content) immediately after starting the execution
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/trigger/config")
     public ResponseEntity<Void> trigger(@RequestBody DSCConfig mxPortConfig) {
-        CompletableFuture.runAsync(() -> execute(mxPortConfig, mxPortConfig.getTimeout()));
-
+        execute(mxPortConfig, mxPortConfig.getTimeout(), false);
         return ResponseEntity.noContent().build();
     }
 }

@@ -62,10 +62,11 @@ public class DSCExecutor {
         this.pluginRegistry = pluginRegistry;
     }
 
-    public void execute(DSCConfig mxPortConfig, long timeout) throws DSCExecuteException {
+    public void execute(DSCConfig mxPortConfig, long timeout, boolean useCache)
+            throws DSCExecuteException {
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-        Future<?> future = executor.submit(() -> execute(mxPortConfig));
+        Future<?> future = executor.submit(() -> execute(mxPortConfig, useCache));
 
         try {
             future.get(timeout, TimeUnit.SECONDS);
@@ -87,18 +88,23 @@ public class DSCExecutor {
     /**
      * Executes the MX-Port workflow for the specified MX-Port configuration.
      *
-     * <p>This method retrieves pre-loaded and cached plugins from the registry and executes all
-     * configured plugin components in sequence: Discovery, Gate, Converter, and Adapter.
+     * <p>This method retrieves pre-loaded and potentially cached plugins from the registry and
+     * executes all configured plugin components in sequence: Discovery, Gate, Converter, and
+     * Adapter.
      *
      * @param mxPortConfig the MX-Port configuration to execute
+     * @param useCache whether to use a cache for the plugins
      * @throws DSCExecuteException if the plugins are not found or execution fails
      */
-    public void execute(DSCConfig mxPortConfig) throws DSCExecuteException {
+    public void execute(DSCConfig mxPortConfig, boolean useCache) throws DSCExecuteException {
         String mxPortName = mxPortConfig.getName();
         LOGGER.info("Starting MX-Port execution for: {}", mxPortName);
 
         // Retrieve cached plugins from registry
-        DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.getPluginsForPort(mxPortConfig);
+        DSCPluginRegistry.LoadedPlugins plugins =
+                useCache
+                        ? pluginRegistry.loadAndCachePlugins(mxPortConfig)
+                        : pluginRegistry.loadPlugins(mxPortConfig);
 
         @SuppressWarnings("rawtypes")
         Discovery discovery = plugins.discovery();

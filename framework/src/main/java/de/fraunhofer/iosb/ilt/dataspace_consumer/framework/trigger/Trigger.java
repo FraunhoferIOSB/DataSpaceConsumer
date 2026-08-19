@@ -15,6 +15,8 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.trigger;
 
+import java.util.concurrent.CompletableFuture;
+
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
@@ -39,15 +41,30 @@ public class Trigger {
     }
 
     /**
+     * Execute the MX-Port using the framework executor using cached entries for the plugin
+     * registry. Exceptions thrown by the executor are logged but not rethrown to keep triggers
+     * resilient.
+     *
+     * @param mxPortConfig the MX-Port config to execute
+     * @param timeout maximum timeout for thr request
+     */
+    protected void execute(DSCConfig mxPortConfig, long timeout) {
+        execute(mxPortConfig, timeout, true);
+    }
+
+    /**
      * Execute the MX-Port using the framework executor. Exceptions thrown by the executor are
      * logged but not rethrown to keep triggers resilient.
      *
      * @param mxPortConfig the MX-Port config to execute
+     * @param timeout maximum timeout for thr request
+     * @param useCache whether to use the plugin cache
      */
-    protected void execute(DSCConfig mxPortConfig, long timeout) {
+    protected void execute(DSCConfig mxPortConfig, long timeout, boolean useCache) {
         try {
             LOGGER.info("Trigger invoked for MX-Port: {}", mxPortConfig.getName());
-            mxPortExecutor.execute(mxPortConfig, timeout);
+            CompletableFuture.runAsync(
+                    () -> mxPortExecutor.execute(mxPortConfig, timeout, useCache));
         } catch (DSCExecuteException e) {
             LOGGER.error(
                     "Execution failed for MX-Port {}: {}",
