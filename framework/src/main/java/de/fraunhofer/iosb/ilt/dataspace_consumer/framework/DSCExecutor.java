@@ -39,6 +39,7 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.Gate;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateFormatNotSupportedException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.extension.DSCPluginRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,10 +62,10 @@ public class DSCExecutor {
         this.pluginRegistry = pluginRegistry;
     }
 
-    public void execute(String mxPortName, long timeout) throws DSCExecuteException {
+    public void execute(DSCConfig mxPortConfig, long timeout) throws DSCExecuteException {
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-        Future<?> future = executor.submit(() -> execute(mxPortName));
+        Future<?> future = executor.submit(() -> execute(mxPortConfig));
 
         try {
             future.get(timeout, TimeUnit.SECONDS);
@@ -86,25 +87,27 @@ public class DSCExecutor {
     /**
      * Executes the MX-Port workflow for the specified MX-Port configuration.
      *
-     * <p>This method retrieves pre-loaded and cached plugins from the registry and executes all
-     * configured plugin components in sequence: Discovery, Gate, Converter, and Adapter.
+     * <p>This method retrieves pre-loaded and potentially cached plugins from the registry and
+     * executes all configured plugin components in sequence: Discovery, Gate, Converter, and
+     * Adapter.
      *
-     * @param mxPortName the name of the MX-Port configuration to execute
+     * @param mxPortConfig the MX-Port configuration to execute
      * @throws DSCExecuteException if the plugins are not found or execution fails
      */
-    public void execute(String mxPortName) throws DSCExecuteException {
+    public void execute(DSCConfig mxPortConfig) throws DSCExecuteException {
+        String mxPortName = mxPortConfig.getName();
         LOGGER.info("Starting MX-Port execution for: {}", mxPortName);
 
         // Retrieve cached plugins from registry
-        DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.getPluginsForPort(mxPortName);
+        DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.getPluginsForPort(mxPortConfig);
 
         @SuppressWarnings("rawtypes")
-        Discovery discovery = plugins.getDiscovery();
-        AccessAndUsageControl accessControl = plugins.getAccessAndUsageControl();
-        Gate gate = plugins.getGate();
-        Converter converter = plugins.getConverter();
-        Adapter adapter = plugins.getAdapter();
-        int maxGateRequests = plugins.getExecutionConfig().getMaxGateRequests();
+        Discovery discovery = plugins.discovery();
+        AccessAndUsageControl accessControl = plugins.accessAndUsageControl();
+        Gate gate = plugins.gate();
+        Converter converter = plugins.converter();
+        Adapter adapter = plugins.adapter();
+        int maxGateRequests = plugins.executionConfig().getMaxGateRequests();
 
         // Execute components in sequence
         LOGGER.info("Executing workflow components for MX-Port: {}", mxPortName);

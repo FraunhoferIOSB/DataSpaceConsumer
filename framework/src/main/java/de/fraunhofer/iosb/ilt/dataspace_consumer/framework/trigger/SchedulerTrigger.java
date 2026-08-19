@@ -149,7 +149,7 @@ public class SchedulerTrigger extends Trigger {
                                                 "SchedulerTrigger: Executing MX-Port '{}' after"
                                                         + " delay.",
                                                 mxPortName);
-                                        execute(mxPortName, portConfig.getTimeout());
+                                        execute(portConfig, portConfig.getTimeout());
                                     } catch (Exception e) {
                                         LOGGER.error(
                                                 "SchedulerTrigger: Error while executing MX-Port"
