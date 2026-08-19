@@ -17,6 +17,7 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.trigger;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,17 +39,21 @@ public class Trigger {
     }
 
     /**
-     * Execute the named MX-Port using the framework executor. Exceptions thrown by the executor are
+     * Execute the MX-Port using the framework executor. Exceptions thrown by the executor are
      * logged but not rethrown to keep triggers resilient.
      *
-     * @param mxPortName the name of the MX-Port to execute
+     * @param mxPortConfig the MX-Port config to execute
      */
-    protected void execute(String mxPortName, long timeout) {
+    protected void execute(DSCConfig mxPortConfig, long timeout) {
         try {
-            LOGGER.info("Trigger invoked for MX-Port: {}", mxPortName);
-            mxPortExecutor.execute(mxPortName, timeout);
+            LOGGER.info("Trigger invoked for MX-Port: {}", mxPortConfig.getName());
+            mxPortExecutor.execute(mxPortConfig, timeout);
         } catch (DSCExecuteException e) {
-            LOGGER.error("Execution failed for MX-Port {}: {}", mxPortName, e.getMessage(), e);
+            LOGGER.error(
+                    "Execution failed for MX-Port {}: {}",
+                    mxPortConfig.getName(),
+                    e.getMessage(),
+                    e);
         }
     }
 }
