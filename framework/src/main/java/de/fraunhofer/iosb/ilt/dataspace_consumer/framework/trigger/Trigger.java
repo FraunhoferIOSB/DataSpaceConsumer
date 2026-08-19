@@ -41,30 +41,16 @@ public class Trigger {
     }
 
     /**
-     * Execute the MX-Port using the framework executor using cached entries for the plugin
-     * registry. Exceptions thrown by the executor are logged but not rethrown to keep triggers
-     * resilient.
-     *
-     * @param mxPortConfig the MX-Port config to execute
-     * @param timeout maximum timeout for thr request
-     */
-    protected void execute(DSCConfig mxPortConfig, long timeout) {
-        execute(mxPortConfig, timeout, true);
-    }
-
-    /**
      * Execute the MX-Port using the framework executor. Exceptions thrown by the executor are
      * logged but not rethrown to keep triggers resilient.
      *
      * @param mxPortConfig the MX-Port config to execute
      * @param timeout maximum timeout for thr request
-     * @param useCache whether to use the plugin cache
      */
-    protected void execute(DSCConfig mxPortConfig, long timeout, boolean useCache) {
+    protected void execute(DSCConfig mxPortConfig, long timeout) {
         try {
             LOGGER.info("Trigger invoked for MX-Port: {}", mxPortConfig.getName());
-            CompletableFuture.runAsync(
-                    () -> mxPortExecutor.execute(mxPortConfig, timeout, useCache));
+            CompletableFuture.runAsync(() -> mxPortExecutor.execute(mxPortConfig, timeout));
         } catch (DSCExecuteException e) {
             LOGGER.error(
                     "Execution failed for MX-Port {}: {}",

@@ -62,11 +62,10 @@ public class DSCExecutor {
         this.pluginRegistry = pluginRegistry;
     }
 
-    public void execute(DSCConfig mxPortConfig, long timeout, boolean useCache)
-            throws DSCExecuteException {
+    public void execute(DSCConfig mxPortConfig, long timeout) throws DSCExecuteException {
         ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-        Future<?> future = executor.submit(() -> execute(mxPortConfig, useCache));
+        Future<?> future = executor.submit(() -> execute(mxPortConfig));
 
         try {
             future.get(timeout, TimeUnit.SECONDS);
@@ -93,18 +92,14 @@ public class DSCExecutor {
      * Adapter.
      *
      * @param mxPortConfig the MX-Port configuration to execute
-     * @param useCache whether to use a cache for the plugins
      * @throws DSCExecuteException if the plugins are not found or execution fails
      */
-    public void execute(DSCConfig mxPortConfig, boolean useCache) throws DSCExecuteException {
+    public void execute(DSCConfig mxPortConfig) throws DSCExecuteException {
         String mxPortName = mxPortConfig.getName();
         LOGGER.info("Starting MX-Port execution for: {}", mxPortName);
 
         // Retrieve cached plugins from registry
-        DSCPluginRegistry.LoadedPlugins plugins =
-                useCache
-                        ? pluginRegistry.loadAndCachePlugins(mxPortConfig)
-                        : pluginRegistry.loadPlugins(mxPortConfig);
+        DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.loadAndCachePlugins(mxPortConfig);
 
         @SuppressWarnings("rawtypes")
         Discovery discovery = plugins.discovery();

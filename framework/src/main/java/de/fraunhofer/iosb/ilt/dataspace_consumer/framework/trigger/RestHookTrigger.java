@@ -85,7 +85,7 @@ public class RestHookTrigger extends Trigger {
 
     @PostMapping("/trigger/config")
     public ResponseEntity<Void> trigger(@RequestBody DSCConfig mxPortConfig) {
-        execute(mxPortConfig, mxPortConfig.getTimeout(), false);
+        execute(mxPortConfig, mxPortConfig.getTimeout());
         return ResponseEntity.noContent().build();
     }
 }

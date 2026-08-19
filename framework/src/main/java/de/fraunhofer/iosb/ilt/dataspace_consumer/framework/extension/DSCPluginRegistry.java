@@ -18,6 +18,7 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.extension;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static java.util.Optional.ofNullable;
@@ -130,15 +131,52 @@ public class DSCPluginRegistry {
      *     missing, or configuration injection fails
      */
     public LoadedPlugins loadAndCachePlugins(DSCConfig portConfig) throws DSCExecuteException {
-        if (pluginCache.containsKey(portConfig.getName())) {
+        LoadedPlugins plugins = getCacheEntryIfValid(portConfig);
+        if (Objects.isNull(plugins)) {
+            LOGGER.debug("Loading and caching plugins for MX-Port: {}", portConfig.getName());
+            plugins = loadPlugins(portConfig);
+            pluginCache.put(portConfig.getName(), plugins);
+        } else {
             LOGGER.debug("Returning cached plugins for MX-Port: {}", portConfig.getName());
-            return pluginCache.get(portConfig.getName());
         }
 
-        LOGGER.debug("Loading and caching plugins for MX-Port: {}", portConfig.getName());
-        LoadedPlugins plugins = loadPlugins(portConfig);
-        pluginCache.put(portConfig.getName(), plugins);
         return plugins;
+    }
+
+    /**
+     * Returns the cached entry for this port config if the plugin implementations match, else null.
+     *
+     * @param portConfig The port config to load cached plugins for.
+     * @return The cached plugins if they match the config, else null.
+     */
+    private LoadedPlugins getCacheEntryIfValid(DSCConfig portConfig) {
+        if (!pluginCache.containsKey(portConfig.getName())) {
+            return null;
+        }
+        LoadedPlugins plugins = pluginCache.get(portConfig.getName());
+
+        return plugins.accessAndUsageControl()
+                                .getClass()
+                                .getName()
+                                .equals(portConfig.getAccessAndUsageControl().getImplementation())
+                        && plugins.discovery()
+                                .getClass()
+                                .getName()
+                                .equals(portConfig.getDiscovery().getImplementation())
+                        && plugins.gate()
+                                .getClass()
+                                .getName()
+                                .equals(portConfig.getGate().getImplementation())
+                        && plugins.adapter()
+                                .getClass()
+                                .getName()
+                                .equals(portConfig.getAdapter().getImplementation())
+                        && plugins.converter()
+                                .getClass()
+                                .getName()
+                                .equals(portConfig.getConverter().getImplementation())
+                ? plugins
+                : null;
     }
 
     /**
