@@ -104,7 +104,7 @@ public class DSCPluginRegistry {
             String portName = portConfig.getName();
             try {
                 LOGGER.info("Loading and validating plugins for MX-Port: {}", portName);
-                loadAndCachePlugins(portConfig);
+                getPluginsForPort(portConfig);
                 LOGGER.info("Successfully loaded plugins for MX-Port: {}", portName);
             } catch (DSCExecuteException e) {
                 LOGGER.error(
@@ -130,7 +130,7 @@ public class DSCPluginRegistry {
      * @throws DSCExecuteException if the MX-Port configuration is not found, required plugins are
      *     missing, or configuration injection fails
      */
-    public LoadedPlugins loadAndCachePlugins(DSCConfig portConfig) throws DSCExecuteException {
+    public LoadedPlugins getPluginsForPort(DSCConfig portConfig) throws DSCExecuteException {
         LoadedPlugins plugins = getCacheEntryIfValid(portConfig);
         if (Objects.isNull(plugins)) {
             LOGGER.debug("Loading and caching plugins for MX-Port: {}", portConfig.getName());

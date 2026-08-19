@@ -99,7 +99,7 @@ public class DSCExecutor {
         LOGGER.info("Starting MX-Port execution for: {}", mxPortName);
 
         // Retrieve cached plugins from registry
-        DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.loadAndCachePlugins(mxPortConfig);
+        DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.getPluginsForPort(mxPortConfig);
 
         @SuppressWarnings("rawtypes")
         Discovery discovery = plugins.discovery();
