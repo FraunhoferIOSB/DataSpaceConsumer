@@ -1,0 +1,20 @@
+meta {
+  name: by name
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/trigger?mxPortName=test
+  body: none
+  auth: inherit
+}
+
+params:query {
+  mxPortName: test
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
