@@ -7,19 +7,12 @@
     <artifactId>extensions</artifactId>
     <version>${revision}</version>
   </parent>
-  <artifactId>faaast-gate-extension</artifactId>
+  <artifactId>passthrough-adapter-extension</artifactId>
 
   <packaging>jar</packaging>
-  <name>FAAAST Gate Extension</name>
+  <name>Passthrough Adapter Extension</name>
 
   <properties>
-    <plugin.id>faaast-gate-extension</plugin.id>
+    <plugin.id>passthrough-adapter-extension</plugin.id>
   </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>de.fraunhofer.iosb.ilt.faaast.client</groupId>
-      <artifactId>core</artifactId>
-    </dependency>
-  </dependencies>
 </project>

@@ -19,7 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -36,7 +35,6 @@ import de.fraunhofer.iosb.ilt.faaast.client.interfaces.AASInterface;
 import de.fraunhofer.iosb.ilt.faaast.client.interfaces.AASRepositoryInterface;
 import de.fraunhofer.iosb.ilt.faaast.client.interfaces.SubmodelInterface;
 import de.fraunhofer.iosb.ilt.faaast.client.interfaces.SubmodelRepositoryInterface;
-import de.fraunhofer.iosb.ilt.faaast.service.model.api.paging.PagingInfo;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.core.SerializationException;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.AssetAdministrationShell;
@@ -45,7 +43,6 @@ import org.eclipse.digitaltwin.aas4j.v3.model.Submodel;
 import org.eclipse.digitaltwin.aas4j.v3.model.impl.DefaultEnvironment;
 import org.pf4j.Extension;
 
-@Extension
 /**
  * Implementation of the Gate API that fetches Asset Administration Shells (AAS) and Submodels from
  * a remote FA³ST server using the faaast-client library.
@@ -60,6 +57,7 @@ import org.pf4j.Extension;
  * repository pattern, all shells are requested from the AAS repository endpoint. The returned
  * AAS/Submodel objects are serialized to JSON and returned as the GateResponse payload.
  */
+@Extension
 public class GateImpl implements Gate {
 
     private static final Logger LOGGER = Logger.getLogger(GateImpl.class.getName());
@@ -77,43 +75,22 @@ public class GateImpl implements Gate {
     }
 
     private static final Pattern AAS_REPO_PATTERN = Pattern.compile("^aas[-_]repo.*");
-
     private static final Pattern AAS_PATTERN = Pattern.compile("^aas.*");
-
     private static final Pattern SUBMODEL_REPO_PATTERN = Pattern.compile("^submodel[-_]repo.*");
-
     private static final Pattern SUBMODEL_PATTERN = Pattern.compile("^submodel.*");
-
-    enum InterfaceType {
-        AAS_REPOSITORY,
-        AAS,
-        SUBMODEL_REPOSITORY,
-        SUBMODEL,
-        UNKNOWN;
-
-        static InterfaceType from(String value) {
-            if (value == null) return AAS_REPOSITORY;
-            if (AAS_REPO_PATTERN.matcher(value).matches()) return AAS_REPOSITORY;
-            if (AAS_PATTERN.matcher(value).matches()) return AAS;
-            if (SUBMODEL_REPO_PATTERN.matcher(value).matches()) return SUBMODEL_REPOSITORY;
-            if (SUBMODEL_PATTERN.matcher(value).matches()) return SUBMODEL;
-            return UNKNOWN;
-        }
-    }
 
     private String normalizeUrl(String url) {
         // faaast-client needs urls without the /shells or /submodels suffix:
-
         if (url.endsWith("/shells")) {
-            url = url.substring(0, url.length() - 7);
+            url = url.substring(0, url.length() - "/shells".length());
         } else if (url.endsWith("/submodels")) {
-            url = url.substring(0, url.length() - 10);
+            url = url.substring(0, url.length() - "/submodels".length());
         }
         return url;
     }
 
     /**
-     * Fetch data from a FA³ST AAS server and return it as a GateResponse.
+     * Fetch data from an AAS server and return it as a GateResponse.
      *
      * <p>The method inspects {@code gateRequest.metaInformation()} to decide which FA³ST interface
      * to call. Supported meta information values (case insensitive) are:
@@ -143,10 +120,9 @@ public class GateImpl implements Gate {
         List<AssetAdministrationShell> shells = new ArrayList<>();
         List<Submodel> submodels = new ArrayList<>();
 
-        Map<String, List<String>> headers = new HashMap<>();
-        try (TokenAuthenticatedHttpClient client =
-                new TokenAuthenticatedHttpClient(gateRequest.token())) {
-
+        Map<String, List<String>> headers = Map.of();
+        String errorMessage = null;
+        try {
             String url = normalizeUrl(gateRequest.url());
 
             URI aasServerAddressUri = new URI(url);
@@ -158,27 +134,36 @@ public class GateImpl implements Gate {
             }
 
             if (interfaceType == null || AAS_REPO_PATTERN.matcher(interfaceType).matches()) {
-
                 AASRepositoryInterface aasRepo =
-                        new AASRepositoryInterface(aasServerAddressUri, client);
-                shells.addAll(aasRepo.get(PagingInfo.ALL).getContent());
-
+                        new AASRepositoryInterface.Builder()
+                                .authenticationHeaderProvider(gateRequest::token)
+                                .endpoint(aasServerAddressUri)
+                                .build();
+                shells.addAll(aasRepo.getAll());
             } else if (AAS_PATTERN.matcher(interfaceType).matches()) {
-                AASInterface aasInterface = new AASInterface(aasServerAddressUri, client);
+                AASInterface aasInterface =
+                        new AASInterface.Builder()
+                                .authenticationHeaderProvider(gateRequest::token)
+                                .endpoint(aasServerAddressUri)
+                                .build();
+
                 shells.add(aasInterface.get());
-
             } else if (SUBMODEL_REPO_PATTERN.matcher(interfaceType).matches()) {
-
                 SubmodelRepositoryInterface submodelRepo =
-                        new SubmodelRepositoryInterface(aasServerAddressUri, client);
-                submodels.addAll(submodelRepo.get(PagingInfo.ALL).getContent());
+                        new SubmodelRepositoryInterface.Builder()
+                                .authenticationHeaderProvider(gateRequest::token)
+                                .endpoint(aasServerAddressUri)
+                                .build();
 
+                submodels.addAll(submodelRepo.getAll());
             } else if (SUBMODEL_PATTERN.matcher(interfaceType).matches()) {
                 SubmodelInterface submodelInterface =
-                        new SubmodelInterface(aasServerAddressUri, client);
+                        new SubmodelInterface.Builder()
+                                .authenticationHeaderProvider(gateRequest::token)
+                                .endpoint(aasServerAddressUri)
+                                .build();
                 submodels.add(submodelInterface.get());
             } else {
-
                 LOGGER.log(Level.WARNING, "AAS Interface type \"{0}\" unknown.", interfaceType);
             }
 
@@ -191,18 +176,24 @@ public class GateImpl implements Gate {
             JsonSerializer serializer = new JsonSerializer();
             byte[] payload = serializer.write(environment).getBytes(StandardCharsets.UTF_8);
 
-            return new GateResponse(200, GateResponseFormat.JSON, headers, payload, "");
+            return GateResponse.success(GateResponseFormat.JSON, headers, payload);
         } catch (SerializationException exception) {
             LOGGER.log(Level.SEVERE, "Failed to process JSON", exception);
+            errorMessage = exception.getMessage();
         } catch (URISyntaxException exception) {
             LOGGER.log(Level.SEVERE, "Invalid AAS server URI", exception);
+            errorMessage = exception.getMessage();
         } catch (ConnectivityException exception) {
             LOGGER.log(Level.SEVERE, "Connectivity error while contacting AAS server", exception);
+            errorMessage = exception.getMessage();
         } catch (StatusCodeException exception) {
             LOGGER.log(Level.SEVERE, "Received unexpected status code from AAS server", exception);
+            errorMessage = exception.getMessage();
         } catch (Exception exception) {
             LOGGER.log(Level.SEVERE, "Unexpected exception", exception);
+            errorMessage = exception.getMessage();
         }
-        return new GateResponse(500, GateResponseFormat.JSON, null, null, null);
+        return GateResponse.serverError(
+                GateResponseFormat.JSON, errorMessage.getBytes(StandardCharsets.UTF_8));
     }
 }
