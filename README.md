@@ -72,6 +72,7 @@ The architecture of the “Data Space Consumer” is modular and allows differen
 | [console-adapter-extension](./extensions/console-adapter-extension/) | Console logging for an initial test      | ✅      | Hercules MX-Port and Leo MX-Port |
 | [file-adapter-extension](./extensions/file-adapter-extension/) | Writes data to a file in a specified directory      | ✅      | Hercules MX-Port and Leo MX-Port |
 | [rest-adapter-extension](./extensions/rest-adapter-extension/)       | REST adapter extension for data transfer | ✅      | Hercules MX-Port and Leo MX-Port |
+| [passthrough-adapter-extension](./extensions/passthrough-adapter-extension/) | Passes the converter response through and returns it (synchronous requests) | ✅      | Hercules MX-Port and Leo MX-Port |
 
 ---
 ### Hercules Extension
