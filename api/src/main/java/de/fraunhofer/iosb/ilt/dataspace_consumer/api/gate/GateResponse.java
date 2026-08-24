@@ -25,15 +25,13 @@ import java.util.Map;
  * <p>The payload is kept as a byte[]; specific parsers (JSON, XML, RDF, AASX) can be applied by
  * implementations.
  *
- * @param format may be null if unknown
- * @param fileName if provided
+ * @param status HTTP-like status code (e.g., 200 for success)
+ * @param format optional response format
+ * @param headers HTTP headers and metadata
+ * @param payload raw payload bytes
  */
 public record GateResponse(
-        int status,
-        GateResponseFormat format,
-        Map<String, List<String>> headers,
-        byte[] payload,
-        String fileName) {
+        int status, GateResponseFormat format, Map<String, List<String>> headers, byte[] payload) {
 
     /**
      * Construct a GateResponse holding status, optional format, headers and payload.
@@ -42,7 +40,6 @@ public record GateResponse(
      * @param format optional response format
      * @param headers HTTP headers and metadata
      * @param payload raw payload bytes
-     * @param fileName optional filename suggested by provider
      */
     public GateResponse {
         headers = headers != null ? Map.copyOf(headers) : Collections.emptyMap();
