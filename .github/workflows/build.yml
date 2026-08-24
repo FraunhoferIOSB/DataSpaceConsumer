@@ -55,7 +55,7 @@ jobs:
       pom-file: "api/pom.xml"
       # deploy only on main or tag, otherwise install
       maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
-      maven-args: "-pl framework -am"
+      maven-args: "-pl api -am"
 
   build-framework:
     needs: [build-parent, build-bom, build-api]
