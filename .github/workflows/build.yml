@@ -52,7 +52,7 @@ jobs:
       actions: read
       packages: write
     with:
-      pom-file: "api/pom.xml"
+      pom-file: "pom.xml"
       # deploy only on main or tag, otherwise install
       maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
       maven-args: "-pl api -am"
