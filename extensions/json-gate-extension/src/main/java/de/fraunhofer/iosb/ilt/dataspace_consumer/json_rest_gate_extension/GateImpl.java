@@ -16,7 +16,6 @@
 package de.fraunhofer.iosb.ilt.dataspace_consumer.json_rest_gate_extension;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -28,50 +27,49 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.Gate;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponseFormat;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.pf4j.Extension;
 
+/** Get the data by executing an HTTP GET request at the url with the specified access token. */
 @Extension
 public class GateImpl implements Gate, Configurable {
 
-    private String customEndpoint = null;
     private static final Logger LOGGER = Logger.getLogger(GateImpl.class.getName());
+    private final HttpClient httpClient;
 
-    public GateImpl() {}
+    private Configuration configuration = null;
+
+    /** Constructor. */
+    public GateImpl() {
+        this.httpClient = new HttpClient();
+    }
 
     @Override
     public GateResponse getData(GateRequest gateRequest, List<GateResponseFormat> desiredFormats) {
-        String url = ofNullable(customEndpoint).orElse(gateRequest.url());
+        String url = ofNullable(configuration.endpoint()).orElse(gateRequest.url());
 
         Map<String, List<String>> headers =
                 Map.of("token", List.of(gateRequest.token()), "url", List.of(url));
 
-        String body;
         try {
-            body = executeRequest(url, gateRequest.token());
+            return GateResponse.success(
+                    GateResponseFormat.JSON,
+                    headers,
+                    httpClient.executeRequest(url, gateRequest.token()));
         } catch (IOException e) {
-            LOGGER.severe(String.format("Could not make http request: %s", e.getMessage()));
-            return GateResponse.serverError(GateResponseFormat.JSON, null);
-        }
-
-        return GateResponse.success(
-                GateResponseFormat.JSON, headers, body.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private String executeRequest(String url, String token) throws IOException {
-        Request request = new Request.Builder().addHeader("Authorization", token).url(url).build();
-        Call httpCall = new OkHttpClient().newCall(request);
-        try (Response response = httpCall.execute()) {
-            return response.body().string();
+            LOGGER.severe(String.format("HTTP request failed: %s", e.getMessage()));
+            return GateResponse.serverError(GateResponseFormat.JSON, e.getMessage().getBytes());
         }
     }
 
     @Override
     public void setConfiguration(Map<String, Object> config) throws IllegalArgumentException {
-        customEndpoint =
-                ofNullable(config).orElse(Map.of()).getOrDefault("endpoint", null).toString();
+        if (config == null) {
+            return;
+        }
+        configuration =
+                ofNullable(config.get("endpoint"))
+                        .map(Object::toString)
+                        .map(Configuration::new)
+                        .orElse(Configuration.DEFAULT());
     }
 }

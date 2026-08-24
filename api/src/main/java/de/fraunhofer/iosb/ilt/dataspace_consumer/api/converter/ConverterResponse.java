@@ -36,13 +36,31 @@ public record ConverterResponse(
         String encoding,
         String schema) {
 
+    /** Ensure validity of record parameters. */
     public ConverterResponse {
         Objects.requireNonNull(type);
         payload = payload != null ? payload.clone() : new byte[0];
     }
 
+    /**
+     * Ensure validity of record parameters.
+     *
+     * @param type the payload type
+     * @param payload the payload bytes
+     * @param headers the gate request headers, may be null
+     */
     public ConverterResponse(
             ConverterPayloadType type, byte[] payload, Map<String, List<String>> headers) {
         this(type, payload, headers, null, null);
+    }
+
+    /**
+     * Ensure validity of record parameters.
+     *
+     * @param type the payload type
+     * @param payload the payload bytes
+     */
+    public ConverterResponse(ConverterPayloadType type, byte[] payload) {
+        this(type, payload, null, null, null);
     }
 }
