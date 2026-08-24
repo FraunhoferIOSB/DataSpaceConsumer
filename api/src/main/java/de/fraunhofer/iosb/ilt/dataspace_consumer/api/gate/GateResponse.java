@@ -33,16 +33,22 @@ import java.util.Map;
 public record GateResponse(
         int status, GateResponseFormat format, Map<String, List<String>> headers, byte[] payload) {
 
-    /**
-     * Construct a GateResponse holding status, optional format, headers and payload.
-     *
-     * @param status HTTP-like status code (e.g., 200 for success)
-     * @param format optional response format
-     * @param headers HTTP headers and metadata
-     * @param payload raw payload bytes
-     */
+    /** Ensures default values of this record. */
     public GateResponse {
         headers = headers != null ? Map.copyOf(headers) : Collections.emptyMap();
         payload = payload != null ? payload.clone() : new byte[0];
+    }
+
+    public static GateResponse success(
+            GateResponseFormat format, Map<String, List<String>> headers, byte[] payload) {
+        return new GateResponse(200, format, headers, payload);
+    }
+
+    public static GateResponse serverError(GateResponseFormat format, byte[] reason) {
+        return new GateResponse(500, format, null, reason);
+    }
+
+    public boolean succeeded() {
+        return status >= 200 && status < 300;
     }
 }

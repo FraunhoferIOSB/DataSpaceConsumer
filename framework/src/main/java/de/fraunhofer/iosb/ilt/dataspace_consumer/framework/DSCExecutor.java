@@ -15,6 +15,7 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.framework;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -144,10 +145,13 @@ public class DSCExecutor {
         // Check all gate responses successful before proceeding to conversion
         gateResponses.forEach(
                 gateResponse -> {
-                    // Any non-2xx status code is considered a failure for the gate request
-                    if (gateResponse.status() < 200 || gateResponse.status() >= 300) {
+                    if (!gateResponse.succeeded()) {
                         throw new DSCExecuteException(
-                                "Gate request failed with status code: " + gateResponse.status());
+                                String.format(
+                                        "Gate request failed with status code %d and reason: %s",
+                                        gateResponse.status(),
+                                        new String(
+                                                gateResponse.payload(), StandardCharsets.UTF_8)));
                     }
                 });
 

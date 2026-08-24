@@ -73,19 +73,16 @@ public class SimpleConverter implements Converter, Configurable {
     @Override
     public ConverterResponse convert(List<GateResponse> responses)
             throws UnsupportedOperationException, DSCExecuteException {
-        switch (filter.operation()) {
-            case FilterOperation.INDEX_AT:
+        return switch (filter.operation()) {
+            case FilterOperation.INDEX_AT -> {
                 GateResponse response = getGateResponseOnIndex(responses);
-                return new ConverterResponse(
-                        ConverterPayloadType.JSON, response.payload(), response.headers());
-
-            case FilterOperation.MERGE:
+                yield new ConverterResponse(ConverterPayloadType.JSON, response.payload());
+            }
+            case FilterOperation.MERGE -> {
                 GateResponsesToWrappedJson merger = new GateResponsesToWrappedJson();
-                return merger.wrapAllAsJsonObject(responses);
-            default:
-                throw new DSCExecuteException(
-                        "Unsupported filter operation: " + filter.operation());
-        }
+                yield merger.wrapAllAsJsonObject(responses);
+            }
+        };
     }
 
     private GateResponse getGateResponseOnIndex(List<GateResponse> responses) {
