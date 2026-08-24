@@ -17,6 +17,7 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.trigger;
 
 import java.util.concurrent.CompletableFuture;
 
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.AdapterResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
@@ -41,22 +42,31 @@ public class Trigger {
     }
 
     /**
-     * Execute the MX-Port using the framework executor. Exceptions thrown by the executor are
-     * logged but not rethrown to keep triggers resilient.
+     * Asynchronously execute the MX-Port using the framework executor. Exceptions thrown by the
+     * executor are logged but not rethrown to keep triggers resilient.
      *
      * @param mxPortConfig the MX-Port config to execute
      * @param timeout maximum timeout for thr request
      */
-    protected void execute(DSCConfig mxPortConfig, long timeout) {
+    protected void executeAsync(DSCConfig mxPortConfig, long timeout) {
         try {
-            LOGGER.info("Trigger invoked for MX-Port: {}", mxPortConfig.getName());
+            LOGGER.info("Trigger invoked for MX-Port: {}", mxPortConfig.name());
             CompletableFuture.runAsync(() -> mxPortExecutor.execute(mxPortConfig, timeout));
         } catch (DSCExecuteException e) {
             LOGGER.error(
-                    "Execution failed for MX-Port {}: {}",
-                    mxPortConfig.getName(),
-                    e.getMessage(),
-                    e);
+                    "Execution failed for MX-Port {}: {}", mxPortConfig.name(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * Synchronously execute the MX-Port using the framework executor. Exceptions thrown by the
+     * executor are logged but not rethrown to keep triggers resilient.
+     *
+     * @param mxPortConfig the MX-Port config to execute
+     * @return The adapter response, or null.
+     */
+    protected AdapterResponse execute(DSCConfig mxPortConfig) throws DSCExecuteException {
+        LOGGER.info("Executing MX-Port: {}", mxPortConfig.name());
+        return mxPortExecutor.execute(mxPortConfig);
     }
 }

@@ -71,11 +71,11 @@ public class SchedulerTrigger extends Trigger {
 
         for (DSCConfig config : mxPortService.getMxPorts()) {
             try {
-                schedule(config.getName());
+                schedule(config.name());
             } catch (Exception e) {
                 LOGGER.error(
                         "SchedulerTrigger: Failed to schedule MX-Port '{}': {}",
-                        config.getName(),
+                        config.name(),
                         e.getMessage(),
                         e);
             }
@@ -104,7 +104,7 @@ public class SchedulerTrigger extends Trigger {
             return;
         }
 
-        TriggerConfig trigger = portConfig.getTrigger();
+        TriggerConfig trigger = portConfig.trigger();
         if (trigger == null
                 || trigger.getScheduler() == null
                 || !Boolean.TRUE.equals(trigger.getScheduler().getEnabled())) {
@@ -149,7 +149,7 @@ public class SchedulerTrigger extends Trigger {
                                                 "SchedulerTrigger: Executing MX-Port '{}' after"
                                                         + " delay.",
                                                 mxPortName);
-                                        execute(portConfig, portConfig.getTimeout());
+                                        executeAsync(portConfig, portConfig.timeout());
                                     } catch (Exception e) {
                                         LOGGER.error(
                                                 "SchedulerTrigger: Error while executing MX-Port"

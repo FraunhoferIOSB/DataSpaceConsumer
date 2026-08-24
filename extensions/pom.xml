@@ -27,6 +27,7 @@
     <module>file-adapter-extension</module>
     <module>fx-edc-access-usage-control-extension</module>
     <module>simple-converter-extension</module>
+    <module>passthrough-adapter-extension</module>
     <module>rest-adapter-extension</module>
   </modules>
 

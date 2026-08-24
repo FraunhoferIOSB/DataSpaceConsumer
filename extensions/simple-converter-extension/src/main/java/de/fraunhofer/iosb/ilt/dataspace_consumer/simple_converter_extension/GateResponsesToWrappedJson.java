@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
@@ -77,9 +78,7 @@ public class GateResponsesToWrappedJson {
      *
      * The returned {@link
      * de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterResponse} contains this JSON
-     * as bytes and uses the {@link
-     * de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterPayloadType#JSON} payload
-     * type.
+     * as bytes and uses the {@link ConverterPayloadType#JSON} payload type.
      *
      * @param responses list of GateResponse objects to convert; must not be null
      * @return a ConverterResponse containing the wrapped JSON payload
@@ -118,7 +117,7 @@ public class GateResponsesToWrappedJson {
             root.set("environments", envArrayNode);
 
             byte[] wrapped = mapper.writeValueAsBytes(root);
-            return new ConverterResponse(ConverterPayloadType.JSON, wrapped);
+            return new ConverterResponse(ConverterPayloadType.JSON, wrapped, Map.of());
         } catch (UnsupportedOperationException e) {
             throw e;
 
