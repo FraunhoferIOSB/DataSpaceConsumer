@@ -77,11 +77,11 @@ public class RestAdapter implements Adapter, Configurable {
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
 
-            String contentType = getContentType(request.getType(), request.getEncoding());
+            String contentType = getContentType(request.type(), request.encoding());
             connection.setRequestProperty("Content-Type", contentType);
 
             try (OutputStream os = connection.getOutputStream()) {
-                os.write(request.getPayload());
+                os.write(request.payload());
             }
 
             int statusCode = connection.getResponseCode();
@@ -96,9 +96,9 @@ public class RestAdapter implements Adapter, Configurable {
         return null;
     }
 
-    private String getContentType(ConverterPayloadType type, Optional<String> encoding) {
+    private String getContentType(ConverterPayloadType type, String encoding) {
         String baseType = type.getMediaType();
-        String charset = encoding.map(enc -> "; charset=" + enc).orElse("");
+        String charset = ofNullable(encoding).map(enc -> "; charset=" + enc).orElse("");
         return baseType + charset;
     }
 

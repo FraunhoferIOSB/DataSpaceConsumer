@@ -18,18 +18,19 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.console_adapter_extension;
 import java.nio.charset.StandardCharsets;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.Adapter;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.AdapterResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import org.pf4j.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Extension
 /**
  * Simple adapter implementation that logs incoming converter payloads to the application logger
  * (console). This adapter is intended for debugging and inspection purposes: it prints the payload
  * type and the UTF-8 decoded payload content at INFO level.
  */
+@Extension
 public class ConsoleAdapter implements Adapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsoleAdapter.class);
@@ -60,18 +61,17 @@ public class ConsoleAdapter implements Adapter {
     @Override
     public AdapterResponse adapt(ConverterResponse request) throws DSCExecuteException {
 
-        if (request == null || request.getPayload() == null) {
-            LOG.warn("ConverterResponse oder Payload ist null");
-            return;
+        if (request == null || request.payload() == null) {
+            LOG.warn("ConverterResponse or Payload is null");
             return null;
         }
 
-        byte[] payload = request.getPayload();
+        byte[] payload = request.payload();
 
         LOG.info("=== ConsoleAdapter ===");
-        LOG.info("Payload-Typ: {}", request.getType());
+        LOG.info("Payload-Type: {}", request.type());
         String content = new String(payload, StandardCharsets.UTF_8);
-        LOG.info("Payload-Inhalt:\n{}", content);
+        LOG.info("Payload-Content:\n{}", content);
         LOG.info("============================");
         return null;
     }

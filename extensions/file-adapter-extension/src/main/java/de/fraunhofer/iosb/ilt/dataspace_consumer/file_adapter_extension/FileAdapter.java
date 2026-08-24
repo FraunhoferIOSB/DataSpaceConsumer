@@ -93,18 +93,18 @@ public class FileAdapter implements Adapter, Configurable {
     @Override
     public AdapterResponse adapt(ConverterResponse request) throws DSCExecuteException {
 
-        if (request == null || request.getPayload() == null) {
+        if (request == null || request.payload() == null) {
             LOG.warn("ConverterResponse oder Payload ist null");
             return null;
         }
 
-        Path path = Paths.get(folderPath, getFileName(request.getType()));
+        Path path = Paths.get(folderPath, getFileName(request.type()));
 
         LOG.info("=== FileAdapter ===");
 
         try {
             Files.createDirectories(path.getParent());
-            Files.write(path, request.getPayload());
+            Files.write(path, request.payload());
             LOG.info("Payload saved in: {}", path);
         } catch (IOException e) {
             LOG.warn("IO exception: Failed to write payload to: {}", path);

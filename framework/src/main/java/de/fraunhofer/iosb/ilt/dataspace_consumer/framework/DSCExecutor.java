@@ -145,10 +145,9 @@ public class DSCExecutor {
         gateResponses.forEach(
                 gateResponse -> {
                     // Any non-2xx status code is considered a failure for the gate request
-                    if (gateResponse.getStatus() < 200 || gateResponse.getStatus() >= 300) {
+                    if (gateResponse.status() < 200 || gateResponse.status() >= 300) {
                         throw new DSCExecuteException(
-                                "Gate request failed with status code: "
-                                        + gateResponse.getStatus());
+                                "Gate request failed with status code: " + gateResponse.status());
                     }
                 });
 
