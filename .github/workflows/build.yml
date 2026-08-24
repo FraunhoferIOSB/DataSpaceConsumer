@@ -64,7 +64,8 @@ jobs:
       actions: read
       packages: write
     with:
-      pom-file: "framework/pom.xml"
+      pom-file: "pom.xml"
+      maven-args: "-pl framework -am"
       maven-phase: "package"
       build-artifact-name: framework-artifact
       build-artifact-path: framework/target/
@@ -91,7 +92,8 @@ jobs:
       actions: read
       packages: write
     with:
-      pom-file: "extensions/pom.xml"
+      pom-file: "pom.xml"
+      maven-args: "-pl extensions -am"
       maven-phase: "package"
       build-artifact-name: extensions-artifact
       build-artifact-path: extensions/**/target/
