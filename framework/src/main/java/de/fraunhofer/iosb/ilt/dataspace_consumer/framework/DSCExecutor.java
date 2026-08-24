@@ -15,6 +15,7 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.framework;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -101,8 +102,7 @@ public class DSCExecutor {
         // Retrieve cached plugins from registry
         DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.getPluginsForPort(mxPortConfig);
 
-        @SuppressWarnings("rawtypes")
-        Discovery discovery = plugins.discovery();
+        Discovery<?> discovery = plugins.discovery();
         AccessAndUsageControl accessControl = plugins.accessAndUsageControl();
         Gate gate = plugins.gate();
         Converter converter = plugins.converter();
@@ -138,11 +138,13 @@ public class DSCExecutor {
         // Check all gate responses successful before proceeding to conversion
         gateResponses.forEach(
                 gateResponse -> {
-                    // Any non-2xx status code is considered a failure for the gate request
-                    if (gateResponse.getStatus() < 200 || gateResponse.getStatus() >= 300) {
+                    if (!gateResponse.succeeded()) {
                         throw new DSCExecuteException(
-                                "Gate request failed with status code: "
-                                        + gateResponse.getStatus());
+                                String.format(
+                                        "Gate request failed with status code %d and reason: %s",
+                                        gateResponse.status(),
+                                        new String(
+                                                gateResponse.payload(), StandardCharsets.UTF_8)));
                     }
                 });
 
