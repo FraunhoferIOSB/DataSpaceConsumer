@@ -22,9 +22,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
-import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.Adapter;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.AdapterResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.config.Configurable;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterPayloadType;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterResponse;
@@ -67,7 +69,7 @@ public class RestAdapter implements Adapter, Configurable {
      *     response status code is not successful (i.e. not in the 2xx range)
      */
     @Override
-    public void adapt(ConverterResponse request) throws DSCExecuteException {
+    public AdapterResponse adapt(ConverterResponse request) throws DSCExecuteException {
         try {
 
             URL url = new URI(endpointUrl).toURL();
@@ -91,6 +93,7 @@ public class RestAdapter implements Adapter, Configurable {
         } catch (URISyntaxException e) {
             throw new DSCExecuteException("Invalid URI syntax: " + endpointUrl, e);
         }
+        return null;
     }
 
     private String getContentType(ConverterPayloadType type, Optional<String> encoding) {

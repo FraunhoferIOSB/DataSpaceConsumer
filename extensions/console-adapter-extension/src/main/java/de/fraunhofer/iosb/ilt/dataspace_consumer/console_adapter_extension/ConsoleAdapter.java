@@ -53,15 +53,17 @@ public class ConsoleAdapter implements Adapter {
      * contents are logged at INFO level.
      *
      * @param request the ConverterResponse containing the payload to log
+     * @return null, as the result is consumed otherwise
      * @throws DSCExecuteException declared by the Adapter interface; this implementation does not
      *     throw it under normal circumstances
      */
     @Override
-    public void adapt(ConverterResponse request) throws DSCExecuteException {
+    public AdapterResponse adapt(ConverterResponse request) throws DSCExecuteException {
 
         if (request == null || request.getPayload() == null) {
             LOG.warn("ConverterResponse oder Payload ist null");
             return;
+            return null;
         }
 
         byte[] payload = request.getPayload();
@@ -71,5 +73,6 @@ public class ConsoleAdapter implements Adapter {
         String content = new String(payload, StandardCharsets.UTF_8);
         LOG.info("Payload-Inhalt:\n{}", content);
         LOG.info("============================");
+        return null;
     }
 }
