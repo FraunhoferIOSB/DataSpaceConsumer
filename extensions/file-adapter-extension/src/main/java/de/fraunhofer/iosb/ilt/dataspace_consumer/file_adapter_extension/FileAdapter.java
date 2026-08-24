@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.Adapter;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.AdapterResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.config.Configurable;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterPayloadType;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterResponse;
@@ -85,28 +86,30 @@ public class FileAdapter implements Adapter, Configurable {
      * contents are written to a file in the specified folder (folderPath property).
      *
      * @param request the ConverterResponse containing the payload to log
+     * @return null, as the result is consumed otherwise
      * @throws DSCExecuteException declared by the Adapter interface; this implementation does not
      *     throw it under normal circumstances
      */
     @Override
-    public void adapt(ConverterResponse request) throws DSCExecuteException {
+    public AdapterResponse adapt(ConverterResponse request) throws DSCExecuteException {
 
-        if (request == null || request.getPayload() == null) {
+        if (request == null || request.payload() == null) {
             LOG.warn("ConverterResponse oder Payload ist null");
-            return;
+            return null;
         }
 
-        Path path = Paths.get(folderPath, getFileName(request.getType()));
+        Path path = Paths.get(folderPath, getFileName(request.type()));
 
         LOG.info("=== FileAdapter ===");
 
         try {
             Files.createDirectories(path.getParent());
-            Files.write(path, request.getPayload());
+            Files.write(path, request.payload());
             LOG.info("Payload saved in: {}", path);
         } catch (IOException e) {
             LOG.warn("IO exception: Failed to write payload to: {}", path);
         }
+        return null;
     }
 
     @Override

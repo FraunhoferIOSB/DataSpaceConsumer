@@ -21,7 +21,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -75,9 +78,7 @@ public class GateResponsesToWrappedJson {
      *
      * The returned {@link
      * de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterResponse} contains this JSON
-     * as bytes and uses the {@link
-     * de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterPayloadType#JSON} payload
-     * type.
+     * as bytes and uses the {@link ConverterPayloadType#JSON} payload type.
      *
      * @param responses list of GateResponse objects to convert; must not be null
      * @return a ConverterResponse containing the wrapped JSON payload
@@ -95,12 +96,12 @@ public class GateResponsesToWrappedJson {
             List<Environment> envs = new ArrayList<>();
 
             for (GateResponse r : responses) {
-                if (r == null || r.getPayloadBytes() == null || r.getPayloadBytes().length == 0) {
+                if (r == null || r.payload() == null || r.payload().length == 0) {
                     continue;
                 }
-                Optional<GateResponseFormat> format = r.getFormat();
+                Optional<GateResponseFormat> format = ofNullable(r.format());
                 if (format.isPresent()) {
-                    Environment env = readAsEnvironment(format.get(), r.getPayloadBytes());
+                    Environment env = readAsEnvironment(format.get(), r.payload());
                     envs.add(env);
                 }
             }
@@ -116,7 +117,7 @@ public class GateResponsesToWrappedJson {
             root.set("environments", envArrayNode);
 
             byte[] wrapped = mapper.writeValueAsBytes(root);
-            return new ConverterResponse(ConverterPayloadType.JSON, wrapped);
+            return new ConverterResponse(ConverterPayloadType.JSON, wrapped, Map.of());
         } catch (UnsupportedOperationException e) {
             throw e;
 

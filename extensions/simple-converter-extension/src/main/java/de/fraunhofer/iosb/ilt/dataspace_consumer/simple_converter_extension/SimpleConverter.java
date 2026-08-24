@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Optional.ofNullable;
+
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.config.Configurable;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.Converter;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterCapabilities;
@@ -29,7 +31,6 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponseFormat;
 import org.pf4j.Extension;
 
-@Extension
 /**
  * A simple Converter implementation used for demonstration and testing purposes.
  *
@@ -42,6 +43,7 @@ import org.pf4j.Extension;
  *
  * The converter advertises support for JSON {@link GateResponseFormat}s.
  */
+@Extension
 public class SimpleConverter implements Converter, Configurable {
     private Filter filter;
 
@@ -74,7 +76,8 @@ public class SimpleConverter implements Converter, Configurable {
         switch (filter.operation()) {
             case FilterOperation.INDEX_AT:
                 GateResponse response = getGateResponseOnIndex(responses);
-                return new ConverterResponse(ConverterPayloadType.JSON, response.getPayloadBytes());
+                return new ConverterResponse(
+                        ConverterPayloadType.JSON, response.payload(), response.headers());
 
             case FilterOperation.MERGE:
                 GateResponsesToWrappedJson merger = new GateResponsesToWrappedJson();
@@ -93,10 +96,10 @@ public class SimpleConverter implements Converter, Configurable {
             throw new UnsupportedOperationException("Invalid Payload-Typ", e);
         }
         GateResponse response = responses.get(indexAt);
-        Optional<GateResponseFormat> format = response.getFormat();
+        Optional<GateResponseFormat> format = ofNullable(response.format());
         if (format.isEmpty() || format.get() != GateResponseFormat.JSON) {
             throw new UnsupportedOperationException(
-                    "Invalid response format: " + response.getFormat());
+                    "Invalid response format: " + response.format());
         }
         return response;
     }

@@ -45,6 +45,6 @@ public class DSCService {
      * @return the MXPortConfig or {@code null} if not found
      */
     public DSCConfig getPortByName(String name) {
-        return mxPorts.stream().filter(p -> p.getName().equals(name)).findFirst().orElse(null);
+        return mxPorts.stream().filter(p -> p.name().equals(name)).findFirst().orElse(null);
     }
 }

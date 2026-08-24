@@ -25,10 +25,13 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.Optional.ofNullable;
+
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessAndUsageControl;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.Adapter;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.AdapterResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.UnsupportedPayloadTypeException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.Converter;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterCapabilities;
@@ -40,6 +43,7 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateFormatNotSupported
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.MxPortExecutionConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.extension.DSCPluginRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,27 +91,29 @@ public class DSCExecutor {
     /**
      * Executes the MX-Port workflow for the specified MX-Port configuration.
      *
-     * <p>This method retrieves pre-loaded and potentially cached plugins from the registry and
-     * executes all configured plugin components in sequence: Discovery, Gate, Converter, and
-     * Adapter.
+     * <p>This method retrieves preloaded plugins from the registry and executes all configured
+     * plugin components in sequence: Discovery, Gate, Converter, and Adapter.
      *
      * @param mxPortConfig the MX-Port configuration to execute
+     * @return The adapter response if the adapter returns something, else null.
      * @throws DSCExecuteException if the plugins are not found or execution fails
      */
-    public void execute(DSCConfig mxPortConfig) throws DSCExecuteException {
-        String mxPortName = mxPortConfig.getName();
+    public AdapterResponse execute(DSCConfig mxPortConfig) throws DSCExecuteException {
+        String mxPortName = mxPortConfig.name();
         LOGGER.info("Starting MX-Port execution for: {}", mxPortName);
 
         // Retrieve cached plugins from registry
         DSCPluginRegistry.LoadedPlugins plugins = pluginRegistry.getPluginsForPort(mxPortConfig);
 
-        @SuppressWarnings("rawtypes")
-        Discovery discovery = plugins.discovery();
+        Discovery<?> discovery = plugins.discovery();
         AccessAndUsageControl accessControl = plugins.accessAndUsageControl();
         Gate gate = plugins.gate();
         Converter converter = plugins.converter();
         Adapter adapter = plugins.adapter();
-        int maxGateRequests = plugins.executionConfig().getMaxGateRequests();
+        int maxGateRequests =
+                ofNullable(plugins.executionConfig())
+                        .orElse(MxPortExecutionConfig.DEFAULT)
+                        .maxGateRequests();
 
         // Execute components in sequence
         LOGGER.info("Executing workflow components for MX-Port: {}", mxPortName);
@@ -139,10 +145,9 @@ public class DSCExecutor {
         gateResponses.forEach(
                 gateResponse -> {
                     // Any non-2xx status code is considered a failure for the gate request
-                    if (gateResponse.getStatus() < 200 || gateResponse.getStatus() >= 300) {
+                    if (gateResponse.status() < 200 || gateResponse.status() >= 300) {
                         throw new DSCExecuteException(
-                                "Gate request failed with status code: "
-                                        + gateResponse.getStatus());
+                                "Gate request failed with status code: " + gateResponse.status());
                     }
                 });
 
@@ -153,26 +158,19 @@ public class DSCExecutor {
         // 5. (Layer 1): Execute Adapter
         LOGGER.info("Executing adapter for MX-Port: {}", mxPortName);
         try {
-            adapter.adapt(adapterRequest);
+            AdapterResponse adapterResult = adapter.adapt(adapterRequest);
+            LOGGER.info("MX-Port execution completed for: {}", mxPortName);
+            return adapterResult;
         } catch (UnsupportedPayloadTypeException e) {
             throw new DSCExecuteException(e.getMessage(), e);
         }
-
-        LOGGER.info("MX-Port execution completed for: {}", mxPortName);
     }
 
     /**
      * Represents the result of the discovery phase containing access requests and discovered info.
      */
-    private static class DiscoveryResult {
-        final List<AccessRequest> gateAccessRequests;
-        final Object discoveredInfos;
-
-        DiscoveryResult(List<AccessRequest> gateAccessRequests, Object discoveredInfos) {
-            this.gateAccessRequests = gateAccessRequests;
-            this.discoveredInfos = discoveredInfos;
-        }
-    }
+    private record DiscoveryResult(
+            List<AccessRequest> gateAccessRequests, Object discoveredInfos) {}
 
     /**
      * Executes the Discovery phase (Layer 5) and retrieves access requests.
