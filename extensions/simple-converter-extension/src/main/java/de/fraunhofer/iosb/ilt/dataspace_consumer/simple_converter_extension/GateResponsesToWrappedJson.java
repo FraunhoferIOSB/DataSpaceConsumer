@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Optional.ofNullable;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -95,12 +97,12 @@ public class GateResponsesToWrappedJson {
             List<Environment> envs = new ArrayList<>();
 
             for (GateResponse r : responses) {
-                if (r == null || r.getPayloadBytes() == null || r.getPayloadBytes().length == 0) {
+                if (r == null || r.payload() == null || r.payload().length == 0) {
                     continue;
                 }
-                Optional<GateResponseFormat> format = r.getFormat();
+                Optional<GateResponseFormat> format = ofNullable(r.format());
                 if (format.isPresent()) {
-                    Environment env = readAsEnvironment(format.get(), r.getPayloadBytes());
+                    Environment env = readAsEnvironment(format.get(), r.payload());
                     envs.add(env);
                 }
             }
