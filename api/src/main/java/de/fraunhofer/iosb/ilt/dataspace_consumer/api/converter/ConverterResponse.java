@@ -55,7 +55,7 @@ public record ConverterResponse(
     }
 
     /**
-     * Ensure validity of record parameters.
+     * Simplified constructor without encoding or schema metadata.
      *
      * @param type the payload type
      * @param payload the payload bytes
