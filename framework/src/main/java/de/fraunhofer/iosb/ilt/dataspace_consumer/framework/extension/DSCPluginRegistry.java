@@ -34,8 +34,6 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCComponentConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.MxPortExecutionConfig;
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

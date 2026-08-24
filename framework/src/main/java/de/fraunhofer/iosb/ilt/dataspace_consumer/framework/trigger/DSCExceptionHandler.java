@@ -47,8 +47,8 @@ public class DSCExceptionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DSCExceptionHandler.class);
 
     /**
-     * Configuration or argument validation failure, typically thrown by a plugin's
-     * {@code setConfiguration} implementation.
+     * Configuration or argument validation failure, typically thrown by a plugin's {@code
+     * setConfiguration} implementation.
      *
      * @param ex the illegal argument
      * @param request the current request
@@ -109,7 +109,10 @@ public class DSCExceptionHandler {
      * @param request the current request
      * @return a {@code 422 Unprocessable Content} response
      */
-    @ExceptionHandler({UnsupportedPayloadTypeException.class, GateFormatNotSupportedException.class})
+    @ExceptionHandler({
+        UnsupportedPayloadTypeException.class,
+        GateFormatNotSupportedException.class
+    })
     public ResponseEntity<ErrorResponse> handleUnsupported(
             RuntimeException ex, HttpServletRequest request) {
         return build(HttpStatus.UNPROCESSABLE_CONTENT, ex, request);
