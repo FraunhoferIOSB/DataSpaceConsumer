@@ -42,7 +42,6 @@ public class EdcClientParser {
 
     private final TitaniumJsonLd titaniumJsonLd = new TitaniumJsonLd();
 
-
     /**
      * Functional supplier which may throw a JsonProcessingException when called.
      *
