@@ -39,15 +39,35 @@ public record GateResponse(
         payload = payload != null ? payload.clone() : new byte[0];
     }
 
+    /**
+     * Returns GateResponse with code 200.
+     *
+     * @param format optional response format
+     * @param headers HTTP headers and metadata
+     * @param payload raw payload bytes
+     * @return GateResponse with status code 200 and given parameters.
+     */
     public static GateResponse success(
             GateResponseFormat format, Map<String, List<String>> headers, byte[] payload) {
         return new GateResponse(200, format, headers, payload);
     }
 
+    /**
+     * Returns GateResponse with code 500.
+     *
+     * @param format optional response format
+     * @param reason failure reason
+     * @return GateResponse with status code 500 and given parameters.
+     */
     public static GateResponse serverError(GateResponseFormat format, byte[] reason) {
         return new GateResponse(500, format, null, reason);
     }
 
+    /**
+     * Returns whether the response succeeded or failed, i.e. if the status code is in [200,300).
+     *
+     * @return True if status code greater than or equal to 200 and status code smaller than 300.
+     */
     public boolean succeeded() {
         return status >= 200 && status < 300;
     }

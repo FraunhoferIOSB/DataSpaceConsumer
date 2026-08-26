@@ -1,29 +1,38 @@
 # Data Space Consumer
 
 | Data Space Consumer is still under development. Contributions are highly welcome. |
-| --------------------------------------------------------------------------------- |
+|-----------------------------------------------------------------------------------|
 
-The **Data Space Consumer** automates the retrieval of authorised data via [MX-Ports](https://factory-x.org/wp-content/uploads/MX-Port-Concept-V1.10.pdf) within data spaces.
+The **Data Space Consumer** automates the retrieval of authorised data
+via [MX-Ports](https://factory-x.org/wp-content/uploads/MX-Port-Concept-V1.10.pdf) within data spaces.
 
-The Data Space Consumer is being developed and tested as part of [**Factory-X**](https://factory-x.org/), a data space initiative for the digitalization of supply chains in industry with the aim of creating an open and collaborative digital ecosystem for factory equipment suppliers and operators. Factory-X is part of the [**Manufacturing-X**](https://www.plattform-i40.de/IP/Navigation/DE/Manufacturing-X/Initiative/initiative-manufacturing-x.html) initiative, which aims to enable companies to share their data confidently and collaboratively across the entire manufacturing and supply chain.
+The Data Space Consumer is being developed and tested as part of [**Factory-X**](https://factory-x.org/), a data space
+initiative for the digitalization of supply chains in industry with the aim of creating an open and collaborative
+digital ecosystem for factory equipment suppliers and operators. Factory-X is part of the [
+**Manufacturing-X**](https://www.plattform-i40.de/IP/Navigation/DE/Manufacturing-X/Initiative/initiative-manufacturing-x.html)
+initiative, which aims to enable companies to share their data confidently and collaboratively across the entire
+manufacturing and supply chain.
 
 The **Data Space Consumer** offers a modular framework for retrieving authorised manufacturing and supply chain data.
-This framework enables data consumers (e.g. buyers, platforms, partners) to automatically retrieve manufacturing and supply chain data shared by data providers such as manufacturers. The aim is to support the various MX-Port variants and thus enable secure and standardized data exchange.
+This framework enables data consumers (e.g. buyers, platforms, partners) to automatically retrieve manufacturing and
+supply chain data shared by data providers such as manufacturers. The aim is to support the various MX-Port variants and
+thus enable secure and standardized data exchange.
 
 ![Data Space Consumer](docs/src/images/DataSpaceConsumer.png)
 
-
 ## Data Space Consumer Architecture
 
-The architecture of the “Data Space Consumer” is modular and allows different extensions to be configured for data requests and data output. The various extensions offer functions for the discovery, access and usage control, gate, converter and adapter layers out of the box with components like the [faaast-gate-extension](./extensions/faaast-gate-extension/).
+The architecture of the “Data Space Consumer” is modular and allows different extensions to be configured for data
+requests and data output. The various extensions offer functions for the discovery, access and usage control, gate,
+converter and adapter layers out of the box with components like
+the [faaast-gate-extension](./extensions/faaast-gate-extension/).
 
 ![Data Space Consumer Architecture](docs/src/images/DataSpaceConsumer_Architecture.png)
-
 
 | Components                                 | Goals                                                                                                                                 |
 |--------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
 | **Data Space Consumer Runtime**            | Data Space Consumer Runtime contains all components required for operation.                                                           |
-| **Data Space Consumer Framework**            | Framework for interfaces and classes.                                                                                                 |
+| **Data Space Consumer Framework**          | Framework for interfaces and classes.                                                                                                 |
 | **Adapter Interface**                      | Interface for generic adapter components.                                                                                             |
 | **Converter Interface**                    | Interface for the generic converter components.                                                                                       |
 | **Gate Interface**                         | Interface for generic gate components.                                                                                                |
@@ -40,116 +49,171 @@ The architecture of the “Data Space Consumer” is modular and allows differen
 | **Example Database Extension**             | Example Database Extension for data conversion into various database formats and connect to specific databases.                       |
 | **Example GUI Extension**                  | Example GUI Extension for data visualization.                                                                                         |
 
-
 ## Extensions
+
 ### Discovery
-| Name                                                                     | Description                                                                                                                                                                     | Status | Can be used for  |
-|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
-| [aas-dsp-discovery-extension](./extensions/aas-dsp-discovery-extension/) | Conform to [ADR 002 – Cross-Company Authorization and Discovery](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery) | ✅      | Hercules MX-Port |
-| [aas-dsp-endpoints-extension](./extensions/aas-dsp-endpoints-extension/) | Accesses pre-configured endpoints instead of a catalogue service | ✅      | Hercules MX-Port |
-| [aas-leo-discovery-extension](./extensions/aas-leo-discovery-extension/) | Discovers AAS data via a Leo-based discovery service | ✅      | Leo MX-Port |
 
+| Name                                                                     | Description                                                                                                                                                                                 | Status | Can be used for  |
+|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
+| [aas-dsp-discovery-extension](./extensions/aas-dsp-discovery-extension/) | Conform to [ADR 002 – Cross-Company Authorization and Discovery](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery) | ✅     | Hercules MX-Port |
+| [aas-dsp-endpoints-extension](./extensions/aas-dsp-endpoints-extension/) | Accesses pre-configured endpoints instead of a catalogue service                                                                                                                            | ✅     | Hercules MX-Port |
+| [aas-leo-discovery-extension](./extensions/aas-leo-discovery-extension/) | Discovers AAS data via a Leo-based discovery service                                                                                                                                        | ✅     | Leo MX-Port      |
 
-### Access & Usage Control 
-| Name                                                                                         | Description                                                                                                                                                                                                                                                                                                                                                    | Status | Can be used for  |
-|----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
-| [fx-edc-access-usage-control-extension](./extensions/fx-edc-access-usage-control-extension/) | Client which use the [Facotry-X EDC](https://github.com/factory-x-contributions/factoryx-edc) for access control, conform to [ADR 003](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication) and [ADR 009](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp) | ✅      | Hercules MX-Port |
-| [fx-leo-access-control-extension](./extensions/fx-leo-access-control-extension) | Conform to the Factory-X Leo access control  | ✅      | Leo MX-Port |
+### Access & Usage Control
+
+| Name                                                                                         | Description                                                                                                                                                                                                                                                                                                                                                                            | Status | Can be used for  |
+|----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
+| [fx-edc-access-usage-control-extension](./extensions/fx-edc-access-usage-control-extension/) | Client which use the [Facotry-X EDC](https://github.com/factory-x-contributions/factoryx-edc) for access control, conform to [ADR 003](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication) and [ADR 009](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp) | ✅     | Hercules MX-Port |
+| [fx-leo-access-control-extension](./extensions/fx-leo-access-control-extension)              | Conform to the Factory-X Leo access control                                                                                                                                                                                                                                                                                                                                            | ✅     | Leo MX-Port      |
 
 ### Gate
-| Name                                                         | Description                                                                                 | Status | Can be used for                  |
-|--------------------------------------------------------------|---------------------------------------------------------------------------------------------|--------|----------------------------------|
-| [faaast-gate-extension](./extensions/faaast-gate-extension/) | Use the [FAAAST Client](https://github.com/FraunhoferIOSB/FAAAST-Client) to access AAS data | ✅      | Hercules MX-Port and Leo MX-Port |
+
+| Name                                                               | Description                                                                                          | Status | Can be used for                  |
+|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|--------|----------------------------------|
+| [faaast-gate-extension](./extensions/faaast-gate-extension/)       | Use the [FAAAST Client](https://github.com/FraunhoferIOSB/FAAAST-Client) to access AAS data          | ✅     | Hercules MX-Port and Leo MX-Port |
+| [json-rest-gate-extension](./extensions/json-rest-gate-extension/) | Access JSON data from repositories using an OkHttp Client. Returns the original access token and URL | ✅     | Hercules MX-Port and Leo MX-Port |
 
 ### Converter
+
 | Name                                                                   | Description                                   | Status | Can be used for                  |
 |------------------------------------------------------------------------|-----------------------------------------------|--------|----------------------------------|
-| [simple-converter-extension](./extensions/simple-converter-extension/) | Can convert a list of AAS data to json format | ✅      | Hercules MX-Port and Leo MX-Port |
+| [simple-converter-extension](./extensions/simple-converter-extension/) | Can convert a list of AAS data to json format | ✅     | Hercules MX-Port and Leo MX-Port |
 
 ### Adapter
-| Name                                                                 | Description                              | Status | Can be used for                  |
-|----------------------------------------------------------------------|------------------------------------------|--------|----------------------------------|
-| [console-adapter-extension](./extensions/console-adapter-extension/) | Console logging for an initial test      | ✅      | Hercules MX-Port and Leo MX-Port |
-| [file-adapter-extension](./extensions/file-adapter-extension/) | Writes data to a file in a specified directory      | ✅      | Hercules MX-Port and Leo MX-Port |
-| [rest-adapter-extension](./extensions/rest-adapter-extension/)       | REST adapter extension for data transfer | ✅      | Hercules MX-Port and Leo MX-Port |
-| [passthrough-adapter-extension](./extensions/passthrough-adapter-extension/) | Passes the converter response through and returns it (synchronous requests) | ✅      | Hercules MX-Port and Leo MX-Port |
+
+| Name                                                                         | Description                                                                 | Status | Can be used for                  |
+|------------------------------------------------------------------------------|-----------------------------------------------------------------------------|--------|----------------------------------|
+| [console-adapter-extension](./extensions/console-adapter-extension/)         | Console logging for an initial test                                         | ✅     | Hercules MX-Port and Leo MX-Port |
+| [file-adapter-extension](./extensions/file-adapter-extension/)               | Writes data to a file in a specified directory                              | ✅     | Hercules MX-Port and Leo MX-Port |
+| [rest-adapter-extension](./extensions/rest-adapter-extension/)               | REST adapter extension for data transfer                                    | ✅     | Hercules MX-Port and Leo MX-Port |
+| [passthrough-adapter-extension](./extensions/passthrough-adapter-extension/) | Passes the converter response through and returns it (synchronous requests) | ✅     | Hercules MX-Port and Leo MX-Port |
 
 ---
+
 ### Hercules Extension
-Data exchange via MX-Port Hercules for secure data exchange via [Data Space Protocol (DSP)](https://github.com/eclipse-dataspace-protocol-base/DataspaceProtocol) and [Decentralized Claims Protocol (DCP)](https://github.com/eclipse-dataspace-dcp/decentralized-claims-protocol) using the Asset Administration Shell (AAS) as the data model.
-When using the MX-Port Hercules extension, the following [Factory-X Architecture Decision Records](https://factory-x-contributions.github.io/architecture-decisions/) are fulfilled.
+
+Data exchange via MX-Port Hercules for secure data exchange
+via [Data Space Protocol (DSP)](https://github.com/eclipse-dataspace-protocol-base/DataspaceProtocol)
+and [Decentralized Claims Protocol (DCP)](https://github.com/eclipse-dataspace-dcp/decentralized-claims-protocol) using
+the Asset Administration Shell (AAS) as the data model. When using the MX-Port Hercules extension, the
+following [Factory-X Architecture Decision Records](https://factory-x-contributions.github.io/architecture-decisions/)
+are fulfilled.
 
 #### Data Provider
+
 The Data Provider MUST expose the endpoints according to the following Architecture Decision Records (ADRs):
 
-| Architecture Decision Record (ADR)            | Version         | Link                      | 
-| ------------------- | ------------ | ------------------------------------------------------ | 
-| ADR 002 – Cross-Company Authorization and Discovery Version 0.2.0        | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery | 
-| ADR 003 – Authentication for Dataspaces Version 0.2.0                    | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication | 
-| ADR 008 – Asset Administration Shell Profile for Factory-X Version 0.2.0 | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr008-aas-profile | 
-| ADR 009 – Discovery of AAS Services via DSP Version 0.2.0                | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp | 
+| Architecture Decision Record (ADR)                                       | Version | Link                                                                                                                      | 
+|--------------------------------------------------------------------------|---------|---------------------------------------------------------------------------------------------------------------------------| 
+| ADR 002 – Cross-Company Authorization and Discovery Version 0.2.0        | 0.2.0   | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery | 
+| ADR 003 – Authentication for Dataspaces Version 0.2.0                    | 0.2.0   | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication          | 
+| ADR 008 – Asset Administration Shell Profile for Factory-X Version 0.2.0 | 0.2.0   | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr008-aas-profile             | 
+| ADR 009 – Discovery of AAS Services via DSP Version 0.2.0                | 0.2.0   | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp            | 
 
 #### Data Consumer
+
 The Data Consumer MUST expose the endpoints according to the following Architecture Decision Records (ADRs):
 
-| Architecture Decision Record (ADR)            | Version         | Link                      | 
-| ------------------- | ------------ | ------------------------------------------------------ | 
-| ADR 002 – Cross-Company Authorization and Discovery Version 0.2.0        | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery | 
-| ADR 003 – Authentication for Dataspaces Version 0.2.0                    | 0.2.0 | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication | 
+| Architecture Decision Record (ADR)                                | Version | Link                                                                                                                      | 
+|-------------------------------------------------------------------|---------|---------------------------------------------------------------------------------------------------------------------------| 
+| ADR 002 – Cross-Company Authorization and Discovery Version 0.2.0 | 0.2.0   | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr002-authorization-discovery | 
+| ADR 003 – Authentication for Dataspaces Version 0.2.0             | 0.2.0   | https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication          | 
 
 #### Data exchange steps via the MX-Port Hercules
+
 ![Data exchange via MX-Port Hercules](docs/src/images/DataExchangeHercules.png)
 
-The data exchange steps via MX-Port Hercules are based on: [Based on the Catena-X Connector KIT](https://eclipse-tractusx.github.io/docs-kits/kits/connector-kit/adoption-view/#interaction-overview)
+The data exchange steps via MX-Port Hercules are based
+on: [Based on the Catena-X Connector KIT](https://eclipse-tractusx.github.io/docs-kits/kits/connector-kit/adoption-view/#interaction-overview)
 
-The figure shows the interaction between a data consumer and a data provider. The first action is done by the provider, by preparing the necessary resources to offer data to potential consumers:
-- P1: **Provide** the **data** according to the offered contract definitions and in the transfer type technology used, e.g., operate a resource server like a **Digital Twin Registry** and a **AAS Repository**.
-- P2: **Create** the **data assets** and **policies**. Build **contract definitions** by combining created assets with a **usage** and an **access policy**.
+The figure shows the interaction between a data consumer and a data provider. The first action is done by the provider,
+by preparing the necessary resources to offer data to potential consumers:
+
+- P1: **Provide** the **data** according to the offered contract definitions and in the transfer type technology used,
+  e.g., operate a resource server like a **Digital Twin Registry** and a **AAS Repository**.
+- P2: **Create** the **data assets** and **policies**. Build **contract definitions** by combining created assets with a
+  **usage** and an **access policy**.
 
 With these steps, data is available and offered in a way that it can be found by consumers and access can be negotiated.
 
-The negotiation is initiated on the consumer side. Before engaging in a contract negotiation, the consumer must be issued an [identifiers (**DID**)](https://w3c-ccg.github.io/did-method-web/) by an identity provider (e.g., issuer service).
+The negotiation is initiated on the consumer side. Before engaging in a contract negotiation, the consumer must be
+issued an [identifiers (**DID**)](https://w3c-ccg.github.io/did-method-web/) by an identity provider (e.g., issuer
+service).
 
 Based on the consumers identity, the contract can be negotiated.
-- N1: The Data Space Consumer (with the Hercules Extension) initiates a **request** as defined in the **dataspace protocol (DSP)** to be executed by the **control plane** of the consumer connector.
-- N2: The control plane **resolves** the **provider's DID** to access the corresponding DID document.
-- N3: Before initiating a **DSP request**, the consumer control plane must acquire an **access token** that allows the control plane of the provider to verify the identity of the consumer. This token is provided by the **consumer's wallet**.
-- N4: The **consumer control plane** finally executes the intended **DSP request** by calling the corresponding **DSP endpoint** at the provider control plane, attaching the access token from step N3.
-- N5: The **provider control plane** retrieves the verifiable credentials necessary to **validate the legitimacy** of the request by calling the consumer's wallet using the token created in step N3. The provider accesses the relevant consumer credentials (e.g., a membership credential) and **checks their validity**. In addition, the provider checks whether all other conditions like further policy constraints are met and if successful, accepts the contract offer and sends an agreement to the consumer control plane.
 
-The final step is the actual **data transfer**, after the transfer process has started. The figure shows the standard HTTP pull mechanism, where the Data Space Consumer receives an access token from the provider which is then used to access the provided resource. In the current setup, the **access is controlled by the data plane of the provider**, i.e., the **data plane acts as a proxy** that receives the request (**step T1**) and forwards it to the actual data source (**step T2a** to the DTR or **step T2b** to the AAS repository).
+- N1: The Data Space Consumer (with the Hercules Extension) initiates a **request** as defined in the **dataspace
+  protocol (DSP)** to be executed by the **control plane** of the consumer connector.
+- N2: The control plane **resolves** the **provider's DID** to access the corresponding DID document.
+- N3: Before initiating a **DSP request**, the consumer control plane must acquire an **access token** that allows the
+  control plane of the provider to verify the identity of the consumer. This token is provided by the **consumer's
+  wallet**.
+- N4: The **consumer control plane** finally executes the intended **DSP request** by calling the corresponding **DSP
+  endpoint** at the provider control plane, attaching the access token from step N3.
+- N5: The **provider control plane** retrieves the verifiable credentials necessary to **validate the legitimacy** of
+  the request by calling the consumer's wallet using the token created in step N3. The provider accesses the relevant
+  consumer credentials (e.g., a membership credential) and **checks their validity**. In addition, the provider checks
+  whether all other conditions like further policy constraints are met and if successful, accepts the contract offer and
+  sends an agreement to the consumer control plane.
+
+The final step is the actual **data transfer**, after the transfer process has started. The figure shows the standard
+HTTP pull mechanism, where the Data Space Consumer receives an access token from the provider which is then used to
+access the provided resource. In the current setup, the **access is controlled by the data plane of the provider**,
+i.e., the **data plane acts as a proxy** that receives the request (**step T1**) and forwards it to the actual data
+source (**step T2a** to the DTR or **step T2b** to the AAS repository).
 
 ### Leo Extension
-Data exchange via MX-Port Leo for secure data exchange via [AAS Security](https://industrialdigitaltwin.org/content-hub/aasspecifications/specification-of-the-asset-administration-shell-part-4-security-idta-number-01004) using the Asset Administration Shell (AAS) as the data model. 
+
+Data exchange via MX-Port Leo for secure data exchange
+via [AAS Security](https://industrialdigitaltwin.org/content-hub/aasspecifications/specification-of-the-asset-administration-shell-part-4-security-idta-number-01004)
+using the Asset Administration Shell (AAS) as the data model.
 
 #### Data exchange steps via the MX-Port Leo
+
 ![Data exchange via MX-Port Leo](docs/src/images/DataExchangeLeo.png)
 
 The figure shows the interaction between a data consumer and a data provider.
-- S0: Preliminary step: the Data Consumer needs to register itself at the trusted list when joining the data space and the Data Provider needs to register its endpoints at the company lookup service when joining the data space.
+
+- S0: Preliminary step: the Data Consumer needs to register itself at the trusted list when joining the data space and
+  the Data Provider needs to register its endpoints at the company lookup service when joining the data space.
 
 Interaction for discovery and secure data exchange:
-- S1: The Data Space Consumer component of the Data Consumer sends a request to the Company Lookup service. The request contains the domain of a Data Provider registered in the data space and the Company Lookup service returns the available endpoints of the corresponding Data Provider that the Data Consumer can then use to request data from (Discovery).
-- S2: The Data Space Consumer requests and gets a consumer-specific source token from the Data Consumer’s own Identity Provider server, e.g., using the OAuth2 client credentials grant.
-- S3: The Data Space Consumer exchanges the consumer-specific source token for a standardized Factory-X (FX) token using its own Security Token Service (STS).
+
+- S1: The Data Space Consumer component of the Data Consumer sends a request to the Company Lookup service. The request
+  contains the domain of a Data Provider registered in the data space and the Company Lookup service returns the
+  available endpoints of the corresponding Data Provider that the Data Consumer can then use to request data from
+  (Discovery).
+- S2: The Data Space Consumer requests and gets a consumer-specific source token from the Data Consumer’s own Identity
+  Provider server, e.g., using the OAuth2 client credentials grant.
+- S3: The Data Space Consumer exchanges the consumer-specific source token for a standardized Factory-X (FX) token using
+  its own Security Token Service (STS).
 - S4: The Data Space Consumer sends a request to the Provider Gateway including the previously obtained FX token.
 - S5: The Provider Gateway triggers a token exchange request for the FX token at its own Security Token Service (STS).
-- S6: The provider STS validates the FX token, which entails syntax checks (i.e., FX token structure) as well as issuer verification. For the issuer verification, the provider STS checks the FX token against the trusted list of the data space.
-- S7: After successful validation of the FX token (i.e., issuer verification based on the Trusted List plus the key data for the issuer) the provider STS issues an access token for the provider AAS.
+- S6: The provider STS validates the FX token, which entails syntax checks (i.e., FX token structure) as well as issuer
+  verification. For the issuer verification, the provider STS checks the FX token against the trusted list of the data
+  space.
+- S7: After successful validation of the FX token (i.e., issuer verification based on the Trusted List plus the key data
+  for the issuer) the provider STS issues an access token for the provider AAS.
 - S8: The Provider Gateway redirects the initial request together with the access token to the provider AAS.
 - S9: The Provider Gateway forwards the AAS response to the Data Space Consumer.
 
-Note that the Provider Gateway is an optional component that helps to hide the details of the token handling from the provider AAS server. When no gateway is used, the AAS server would have to perform the token handling steps on its own. In a similar fashion, a gateway could also be used on the consumer side to hide the token handling steps from the Data Space Consumer.
+Note that the Provider Gateway is an optional component that helps to hide the details of the token handling from the
+provider AAS server. When no gateway is used, the AAS server would have to perform the token handling steps on its own.
+In a similar fashion, a gateway could also be used on the consumer side to hide the token handling steps from the Data
+Space Consumer.
 
 ### Orion Extension
+
 Orion extension is under consideration. Contributions are highly welcome.
 
 ## Getting started
 
 ### Configuration
+
 **1. Layer Implementations**
 
 Each layer requires:
+
 - **JAR File**: Place the custom implementation JAR in the deployment-specific `extensions` folder
 - **Implementation Class**: Specify the fully qualified class name (classpath)
 - **Config**: Layer-specific configuration (format and parameters vary per implementation)
@@ -181,46 +245,55 @@ mx-port:
 Choose a trigger method:
 
 Option A: REST Hook
+
 ```yaml
     trigger:
       restHook:
         enabled: true
 ```
-→ Trigger via REST to /trigger with request parameter mxPortName: 
+
+→ Trigger via REST to /trigger with request parameter mxPortName:
+
 ```bash
 curl --request POST \
   --url "http://localhost:8080/trigger?mxPortName={mxPortName}
 ```
 
 Option B: Scheduler
+
 ```yaml
     trigger:
       scheduler:
         enabled: true
         cron: "0 0/5 * * * ?"    # Runs every 5 minutes
 ```
+
 → Automatically triggers on cron schedule
 
 ### Docker Deployment
 
-For detailed instructions on how to deploy the Data Space Consumer using Docker, see the [docker deployment](./deployment/docker).
+For detailed instructions on how to deploy the Data Space Consumer using Docker, see
+the [docker deployment](./deployment/docker).
 
 ### Helm Chart Deployment
 
-For detailed instructions on how to deploy the Data Space Consumer using the Helm chart, see the [helm deployment](./deployment/helm).
+For detailed instructions on how to deploy the Data Space Consumer using the Helm chart, see
+the [helm deployment](./deployment/helm).
 
 ## Development
 
-For detailed instructions on how to set up the development environment and contribute to the Data Space Consumer, see the [development README](./docs/development/README.md).
+For detailed instructions on how to set up the development environment and contribute to the Data Space Consumer, see
+the [development README](./docs/development/README.md).
 
 ## How to write your own extension
 
-For detailed instructions on how to create a custom plugin for the Data Space Consumer Framework, see the [custom-extension README](./docs/custom-extension/README.md).
-
+For detailed instructions on how to create a custom plugin for the Data Space Consumer Framework, see
+the [custom-extension README](./docs/custom-extension/README.md).
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions are **greatly appreciated**.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any
+contributions are **greatly appreciated**.
 
 ## License
 
@@ -228,4 +301,5 @@ Distributed under the Apache 2.0 License. See `LICENSE` for more information.
 
 Copyright (C) 2026 Fraunhofer Institut IOSB, Fraunhoferstr. 1, D 76131 Karlsruhe, Germany.
 
-You should have received a copy of the Apache 2.0 License along with this program. If not, see https://www.apache.org/licenses/LICENSE-2.0.html.
+You should have received a copy of the Apache 2.0 License along with this program. If not,
+see https://www.apache.org/licenses/LICENSE-2.0.html.

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.InitData;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.jsonld.TitaniumJsonLd;
 
 /**
  * Parser utility used to parse EDC (Eclipse Dataspace Connector) related JSON responses and to
@@ -36,30 +37,19 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_ext
 public class EdcClientParser {
 
     private static final Logger LOGGER = Logger.getLogger(EdcClientParser.class.getName());
-    private final ObjectMapper mapper;
+    private static final String ODRL_PREFIX = "http://www.w3.org/ns/odrl/2/";
+    private static final String DCAT_PREFIX = "http://www.w3.org/ns/dcat#";
 
-    /** Create a new parser and initialize the internal {@link ObjectMapper}. */
-    public EdcClientParser() {
-        this.mapper = new ObjectMapper();
-    }
+    private final TitaniumJsonLd titaniumJsonLd = new TitaniumJsonLd();
 
-    @FunctionalInterface
     /**
      * Functional supplier which may throw a JsonProcessingException when called.
      *
      * @param <T> the type of the supplied value
      */
+    @FunctionalInterface
     public interface JsonSupplier<T> {
         T get() throws JsonProcessingException;
-    }
-
-    /**
-     * Returns the internal {@link ObjectMapper} used for JSON processing.
-     *
-     * @return the configured {@link ObjectMapper} instance
-     */
-    public ObjectMapper getObjectMapper() {
-        return mapper;
     }
 
     /**
@@ -97,36 +87,30 @@ public class EdcClientParser {
      * the dataset id and "odrl:assigner" to the root's "participantId" before returning the policy
      * JSON.
      *
-     * @param root the root JSON node of the discovery response
+     * @param catalog the root JSON node of the discovery response, i.e., the catalog
      * @return an {@link InitData} containing the prepared policy JSON string and dataset id
      * @throws DSCExecuteException if no applicable policy is found or input is malformed
      */
-    public InitData parsePolicy(JsonNode root) {
+    public InitData parsePolicy(String catalog) {
+        ObjectNode expanded = ((ObjectNode) (titaniumJsonLd.expand(catalog)).get(0));
 
-        JsonNode participantId = root.get("participantId");
+        for (JsonNode dataset : expanded.get(String.format("%sdataset", DCAT_PREFIX))) {
 
-        for (JsonNode element : root.get("dataset")) {
+            JsonNode idNode = dataset.get("@id");
+            ArrayNode policyNodes =
+                    (ArrayNode) dataset.get(String.format("%shasPolicy", ODRL_PREFIX));
 
-            JsonNode idNode = element.get("@id");
-            JsonNode id2Node = element.get("id");
-
-            if (idNode != null && idNode.asText().equals(id2Node.asText())) {
-                ArrayNode policyNodes = (ArrayNode) element.get("hasPolicy");
-                if (policyNodes != null) {
-                    ObjectNode policy = (ObjectNode) policyNodes.get(0);
-
-                    ObjectNode target = policy.objectNode();
-                    target.set("@id", id2Node.deepCopy());
-                    policy.set("odrl:target", target);
-
-                    ObjectNode assigner = policy.objectNode();
-                    assigner.set("@id", participantId.deepCopy());
-                    policy.set("odrl:assigner", assigner);
-
-                    return new InitData(
-                            policy.toString(), id2Node.asText()); // return raw JSON string
-                }
+            if (idNode == null || policyNodes == null || policyNodes.isEmpty()) {
+                continue;
             }
+
+            ObjectNode policy = (ObjectNode) policyNodes.get(0);
+
+            ObjectNode target = policy.objectNode();
+            target.set("@id", idNode);
+            policy.set(String.format("%starget", ODRL_PREFIX), target);
+
+            return new InitData(policy.toString(), idNode.asText());
         }
 
         throw new DSCExecuteException("No applicable policy found");

@@ -23,7 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPFilter;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
@@ -54,6 +54,7 @@ public class EdcClient {
     private String apiKey;
     private OkHttpClient client;
     private final EdcClientParser parser;
+    private final ObjectMapper mapper;
 
     /**
      * Create a new EdcClient instance.
@@ -79,6 +80,7 @@ public class EdcClient {
         this.apiKey = Objects.requireNonNull(apiKey);
         this.client = Objects.requireNonNullElseGet(httpClient, OkHttpClient::new);
         this.parser = new EdcClientParser();
+        this.mapper = new ObjectMapper();
     }
 
     private static final Logger LOGGER = Logger.getLogger(EdcClient.class.getName());
@@ -192,10 +194,7 @@ public class EdcClient {
                         requestBodyString,
                         "POST",
                         loggingName);
-        JsonNode root =
-                parser.parseJson(
-                        () -> parser.getObjectMapper().readTree(responseBodyString), loggingName);
-        return parser.parsePolicy(root);
+        return parser.parsePolicy(responseBodyString);
     }
 
     /**
@@ -222,9 +221,7 @@ public class EdcClient {
                         loggingName);
         InitNegotiationDTO initNegotiationDTO =
                 parser.parseJson(
-                        () ->
-                                parser.getObjectMapper()
-                                        .readValue(responseBodyString, InitNegotiationDTO.class),
+                        () -> mapper.readValue(responseBodyString, InitNegotiationDTO.class),
                         loggingName);
 
         LOGGER.log(Level.FINE, "negotiation: {0}", initNegotiationDTO);
@@ -251,10 +248,8 @@ public class EdcClient {
                         loggingName);
         return parser.parseJson(
                 () ->
-                        parser.getObjectMapper()
-                                .readValue(
-                                        responseBodyString,
-                                        new TypeReference<List<AvailableEdrDTO>>() {}),
+                        mapper.readValue(
+                                responseBodyString, new TypeReference<List<AvailableEdrDTO>>() {}),
                 loggingName);
     }
 
@@ -275,8 +270,7 @@ public class EdcClient {
                         "GET",
                         loggingName);
         return parser.parseJson(
-                () -> parser.getObjectMapper().readValue(responseBodyString, EdrDTO.class),
-                loggingName);
+                () -> mapper.readValue(responseBodyString, EdrDTO.class), loggingName);
     }
 
     /**
@@ -299,9 +293,7 @@ public class EdcClient {
                         loggingName);
         NegotiationStateDTO negotiationStateDTO =
                 parser.parseJson(
-                        () ->
-                                parser.getObjectMapper()
-                                        .readValue(responseBodyString, NegotiationStateDTO.class),
+                        () -> mapper.readValue(responseBodyString, NegotiationStateDTO.class),
                         loggingName);
         LOGGER.log(Level.FINE, "state: {0}", negotiationStateDTO);
         return negotiationStateDTO;

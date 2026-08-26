@@ -39,6 +39,8 @@ public record AdapterResponse(
         byte[] payload,
         Map<String, List<String>> headers,
         String encoding) {
+
+    /** Ensure validity of record parameters. */
     public AdapterResponse {
         Objects.requireNonNull(payloadType);
         Objects.requireNonNull(payload);

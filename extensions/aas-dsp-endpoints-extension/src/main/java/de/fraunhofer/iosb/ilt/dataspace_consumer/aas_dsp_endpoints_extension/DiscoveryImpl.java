@@ -79,17 +79,19 @@ public class DiscoveryImpl implements Discovery<Void>, Configurable {
     public List<GateRequest> convertToGateRequests(List<AccessResponse> accessResponses, Void empty)
             throws DSCExecuteException {
 
-        Map<String, String> tokenMap = new HashMap<>();
+        Map<String, AccessResponse> tokenMap = new HashMap<>();
 
         for (AccessResponse response : accessResponses) {
-            tokenMap.put(response.identifier().toString(), response.token());
+            tokenMap.put(response.identifier().toString(), response);
         }
 
         return endpoints.stream()
                 .map(
                         x ->
                                 new GateRequest(
-                                        x.assetURL(), tokenMap.get(x.assetId()), x.interfaceType()))
+                                        tokenMap.get(x.assetId()).url(),
+                                        tokenMap.get(x.assetId()).token(),
+                                        x.interfaceType()))
                 .toList();
     }
 
