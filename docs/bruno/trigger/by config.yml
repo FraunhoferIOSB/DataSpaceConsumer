@@ -1,0 +1,63 @@
+info:
+  name: by config
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{url}}/trigger/config"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "my-mx-port",
+        "discovery": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.aas_dsp_endpoints_extension.DiscoveryImpl",
+          "config": {
+            "endpoints": [
+              {
+                "assetId": "2025-1",
+                "dspEndpoint": "https://edc-control-plane/dsp",
+                "assetURL": "https://provider/assets/2025-1",
+                "interfaceType": "AAS-REPOSITORY"
+              }
+            ]
+          }
+        },
+        "accessAndUsageControl": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.AccessUsageControlImpl",
+          "config": {
+            "baseUrl": "https://consumer-control-plane/management",
+            "counterPartyAddress": "https://provider-control-plane/api/v1/dsp",
+            "counterPartyId": "did:web:provider-identity",
+            "apiKey": "authentication-key"
+          }
+        },
+        "gate": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.faaast_gate_extension.GateImpl",
+          "config": {}
+        },
+        "converter": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.simple_converter_extension.SimpleConverter",
+          "config": {
+            "operation": "indexAt",
+            "value": 0
+          }
+        },
+        "adapter": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.console_adapter_extension.ConsoleAdapter",
+          "config": {}
+        },
+        "timeout": 1000000,
+        "execution": {
+          "maxGateRequests": 10
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
