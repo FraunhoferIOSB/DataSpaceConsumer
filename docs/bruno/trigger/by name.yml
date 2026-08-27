@@ -1,0 +1,20 @@
+info:
+  name: by name
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{url}}/trigger?mxPortName=test"
+  params:
+    - name: mxPortName
+      value: test
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
