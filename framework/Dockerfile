@@ -10,7 +10,7 @@ USER spring:spring
 # Copy the pre-built jar
 COPY --chown=spring:spring framework/target/*.jar app.jar
 # Copy extensions if available
-COPY --chown=spring:spring framework/extensions/*.jar /app/extensions
+COPY --chown=spring:spring framework/extensions* /app/extensions
 
 # Expose default Spring Boot port
 EXPOSE 8080
