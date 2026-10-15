@@ -1,7 +1,7 @@
 info:
-  name: by config
+  name: 3. by config
   type: http
-  seq: 2
+  seq: 3
 
 http:
   method: POST
@@ -16,10 +16,9 @@ http:
           "config": {
             "endpoints": [
               {
-                "assetId": "2025-1",
-                "dspEndpoint": "https://edc-control-plane/dsp",
-                "assetURL": "https://provider/assets/2025-1",
-                "interfaceType": "AAS-REPOSITORY"
+                "assetId": "asset-id",
+                "dspEndpoint": "ignored",
+                "interfaceType": "SUBMODEL-REPOSITORY"
               }
             ]
           }
@@ -27,15 +26,17 @@ http:
         "accessAndUsageControl": {
           "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.AccessUsageControlImpl",
           "config": {
-            "baseUrl": "https://consumer-control-plane/management",
-            "counterPartyAddress": "https://provider-control-plane/api/v1/dsp",
-            "counterPartyId": "did:web:provider-identity",
-            "apiKey": "authentication-key"
+            "baseUrl": "http://localhost:8081/management",
+            "counterPartyAddress": "http://provider-controlplane/dsp/2025-1",
+            "counterPartyId": "did:web:provider:id",
+            "apiKey": "password"
           }
         },
         "gate": {
-          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.faaast_gate_extension.GateImpl",
-          "config": {}
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.json_rest_gate_extension.GateImpl",
+          "config": {
+            "endpoint": "http://provider-dataplane:9500/public"
+          }
         },
         "converter": {
           "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.simple_converter_extension.SimpleConverter",
@@ -45,7 +46,7 @@ http:
           }
         },
         "adapter": {
-          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.console_adapter_extension.ConsoleAdapter",
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.passthrough_adapter_extension.AdapterImpl",
           "config": {}
         },
         "timeout": 1000000,

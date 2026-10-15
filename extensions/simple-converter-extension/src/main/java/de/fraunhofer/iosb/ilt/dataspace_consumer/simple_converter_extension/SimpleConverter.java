@@ -76,7 +76,8 @@ public class SimpleConverter implements Converter, Configurable {
         return switch (filter.operation()) {
             case FilterOperation.INDEX_AT -> {
                 GateResponse response = getGateResponseOnIndex(responses);
-                yield new ConverterResponse(ConverterPayloadType.JSON, response.payload());
+                yield new ConverterResponse(
+                        ConverterPayloadType.JSON, response.payload(), response.headers());
             }
             case FilterOperation.MERGE -> {
                 GateResponsesToWrappedJson merger = new GateResponsesToWrappedJson();
