@@ -6,22 +6,22 @@
   <parent>
     <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
     <artifactId>parent</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.3.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>bom</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.3.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Dataspace Consumer BOM</name>
   <description>Bill of Materials for the Dataspace Consumer project</description>
 
   <properties>
-    <pf4j.version>3.15.0</pf4j.version>
-    <slf4j.version>2.0.17</slf4j.version>
+    <pf4j.version>3.16.0</pf4j.version>
+    <slf4j.version>2.0.20</slf4j.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
-    <jackson.databind.version>2.21.2</jackson.databind.version>
+    <jackson.databind.version>2.22.4</jackson.databind.version>
     <jackson.annotations.version>2.21</jackson.annotations.version>
   </properties>
 

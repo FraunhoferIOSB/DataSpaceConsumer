@@ -21,7 +21,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -39,6 +42,18 @@ import org.eclipse.digitaltwin.aas4j.v3.dataformat.json.JsonSerializer;
 import org.eclipse.digitaltwin.aas4j.v3.dataformat.xml.XmlDeserializer;
 import org.eclipse.digitaltwin.aas4j.v3.model.Environment;
 
+/**
+ * Utility class to convert a collection of GateResponse objects into a single wrapped JSON payload
+ * containing an array of AAS Environment objects.
+ *
+ * <p>The class supports deserializing GateResponse payloads in several formats (JSON, XML and AASX
+ * variants) into {@link org.eclipse.digitaltwin.aas4j.v3.model.Environment} instances using the
+ * respective deserializers from the AAS SDK and then produces a JSON object with a top-level
+ * property "environments" that contains the array of deserialized environments.
+ *
+ * <p>Unsupported or unimplemented GateResponse formats (for example RDF or multipart/form-data)
+ * will result in an {@link UnsupportedOperationException} when encountered during deserialization.
+ */
 public class GateResponsesToWrappedJson {
 
     private final JsonDeserializer jsonDeserializer = new JsonDeserializer();
@@ -46,6 +61,32 @@ public class GateResponsesToWrappedJson {
     private final JsonSerializer jsonSerializer = new JsonSerializer();
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Convert a list of GateResponse objects into a single JSON payload.
+     *
+     * <p>Each non-null GateResponse with a non-empty payload and a present {@link
+     * de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponseFormat} is deserialized into
+     * an AAS {@link org.eclipse.digitaltwin.aas4j.v3.model.Environment} using the appropriate
+     * deserializer for its format. The resulting environments are collected and serialized into a
+     * JSON object of the form:
+     *
+     * <pre>
+     * {
+     *   "environments": [ ... ]
+     * }
+     * </pre>
+     *
+     * The returned {@link
+     * de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterResponse} contains this JSON
+     * as bytes and uses the {@link ConverterPayloadType#JSON} payload type.
+     *
+     * @param responses list of GateResponse objects to convert; must not be null
+     * @return a ConverterResponse containing the wrapped JSON payload
+     * @throws UnsupportedOperationException if the provided responses list is null or if an
+     *     encountered GateResponseFormat is explicitly marked as unsupported by this utility
+     * @throws de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException if an
+     *     unexpected error occurs during deserialization or serialization
+     */
     public ConverterResponse wrapAllAsJsonObject(List<GateResponse> responses)
             throws UnsupportedOperationException {
         if (responses == null) {
@@ -55,12 +96,12 @@ public class GateResponsesToWrappedJson {
             List<Environment> envs = new ArrayList<>();
 
             for (GateResponse r : responses) {
-                if (r == null || r.getPayloadBytes() == null || r.getPayloadBytes().length == 0) {
+                if (r == null || r.payload() == null || r.payload().length == 0) {
                     continue;
                 }
-                Optional<GateResponseFormat> format = r.getFormat();
+                Optional<GateResponseFormat> format = ofNullable(r.format());
                 if (format.isPresent()) {
-                    Environment env = readAsEnvironment(format.get(), r.getPayloadBytes());
+                    Environment env = readAsEnvironment(format.get(), r.payload());
                     envs.add(env);
                 }
             }
@@ -76,7 +117,7 @@ public class GateResponsesToWrappedJson {
             root.set("environments", envArrayNode);
 
             byte[] wrapped = mapper.writeValueAsBytes(root);
-            return new ConverterResponse(ConverterPayloadType.JSON, wrapped);
+            return new ConverterResponse(ConverterPayloadType.JSON, wrapped, Map.of());
         } catch (UnsupportedOperationException e) {
             throw e;
 

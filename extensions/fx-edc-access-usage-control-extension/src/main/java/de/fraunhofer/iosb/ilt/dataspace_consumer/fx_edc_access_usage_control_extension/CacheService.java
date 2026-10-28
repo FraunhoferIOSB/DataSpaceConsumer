@@ -23,6 +23,22 @@ import com.github.benmanes.caffeine.cache.Expiry;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.EdrDTO;
 
+/**
+ * CacheService provides in-memory caching for negotiation contexts and EDR tokens used by the FX
+ * EDC access/usage control extension.
+ *
+ * <p>This class uses Caffeine caches to store:
+ *
+ * <ul>
+ *   <li>negotiationCache: maps {@link DSPRequest} -> {@link AuthorizationContext} and expires
+ *       entries 24 hours after write.
+ *   <li>tokenCache: maps {@link AuthorizationContext} -> {@link EdrDTO} and uses the token's
+ *       reported lifetime ({@link EdrDTO#expiresIn()}) to determine expiration. If the token does
+ *       not provide expiration information it is considered expired immediately.
+ * </ul>
+ *
+ * The caches are thread-safe as provided by Caffeine.
+ */
 class CacheService {
 
     private Cache<DSPRequest, AuthorizationContext> negotiationCache =
@@ -66,18 +82,48 @@ class CacheService {
                             })
                     .build();
 
+    /**
+     * Retrieve an EDR token for the given authorization context from the cache.
+     *
+     * @param context the authorization context used as the cache key
+     * @return the cached {@link EdrDTO} for the provided context, or {@code null} if no token is
+     *     cached or it already expired
+     */
     public EdrDTO getToken(AuthorizationContext context) {
         return tokenCache.getIfPresent(context);
     }
 
+    /**
+     * Store an EDR token in the cache for the provided authorization context.
+     *
+     * <p>The token's expiration is derived from {@link EdrDTO#expiresIn()} and the cache will evict
+     * the entry shortly before the token expires.
+     *
+     * @param context the authorization context to associate with the token
+     * @param token the {@link EdrDTO} containing token and lifetime information
+     */
     public void putToken(AuthorizationContext context, EdrDTO token) {
         tokenCache.put(context, token);
     }
 
+    /**
+     * Retrieve a previously stored negotiation context for a DSP request.
+     *
+     * @param request the DSP request whose negotiation context is requested
+     * @return the cached {@link AuthorizationContext} associated with the request, or {@code null}
+     *     if none is present
+     */
     public AuthorizationContext getNegotiationContext(DSPRequest request) {
         return negotiationCache.getIfPresent(request);
     }
 
+    /**
+     * Store a negotiation context for the given DSP request.
+     *
+     * @param request the DSP request to associate the negotiation context with
+     * @param authorizationContext the {@link AuthorizationContext} produced by the negotiation to
+     *     cache
+     */
     public void putNegotiationContext(
             DSPRequest request, AuthorizationContext authorizationContext) {
         negotiationCache.put(request, authorizationContext);

@@ -12,6 +12,7 @@ framework/**/resources/application-prod.yaml
 
 # file-adapter-extension default location payload
 framework/example-directory/*
+framework/data/*
 
 ### STS ###
 .apt_generated
@@ -40,3 +41,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### JSON ###
+*.json

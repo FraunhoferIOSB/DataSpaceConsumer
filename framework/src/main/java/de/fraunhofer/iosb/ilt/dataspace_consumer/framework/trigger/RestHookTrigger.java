@@ -15,19 +15,24 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.trigger;
 
-import java.util.concurrent.CompletableFuture;
+import static de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterPayloadType.JSON;
 
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.AdapterResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.TriggerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.ObjectMapper;
 
 @RestController
 public class RestHookTrigger extends Trigger {
@@ -68,7 +73,7 @@ public class RestHookTrigger extends Trigger {
         }
 
         // Check if RestHook is enabled for this port
-        TriggerConfig triggerConfig = portConfig.getTrigger();
+        TriggerConfig triggerConfig = portConfig.trigger();
         if (triggerConfig == null
                 || triggerConfig.getRestHook() == null
                 || !Boolean.TRUE.equals(triggerConfig.getRestHook().getEnabled())) {
@@ -79,12 +84,32 @@ public class RestHookTrigger extends Trigger {
         }
 
         // Start executing the MX-Port asynchronously using CompletableFuture
-        CompletableFuture.runAsync(
-                () -> {
-                    execute(processedPortName, portConfig.getTimeout());
-                });
-
+        executeAsync(portConfig, portConfig.timeout());
         // Return HTTP 204 (No Content) immediately after starting the execution
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/trigger/config")
+    public ResponseEntity<Object> trigger(@RequestBody DSCConfig mxPortConfig) {
+        if (mxPortConfig.synchronous()) {
+            AdapterResponse result = execute(mxPortConfig);
+            if (result == null) {
+                return ResponseEntity.ok().build();
+            }
+
+            Object resultBody =
+                    result.payloadType() == JSON
+                            ? new ObjectMapper().readTree(result.payload())
+                            : result.payload();
+
+            return ResponseEntity.status(HttpStatus.ACCEPTED)
+                    .headers(
+                            HttpHeaders.readOnlyHttpHeaders(
+                                    MultiValueMap.fromMultiValue(result.headers())))
+                    .body(resultBody);
+        }
+
+        executeAsync(mxPortConfig, mxPortConfig.timeout());
+        return ResponseEntity.noContent().build();
     }
 }

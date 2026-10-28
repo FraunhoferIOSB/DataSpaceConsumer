@@ -60,4 +60,45 @@ public record EdrDTO(
                 String expiresIn,
         String authorization,
         @JsonProperty("tx-auth:refreshAudience") String refreshAudience,
-        @JsonProperty("@context") ContextDTO context) {}
+        @JsonProperty("@context") ContextDTO context) {
+
+    @Override
+    public String toString() {
+        return "EdrDTO{"
+                + "objectType='"
+                + objectType
+                + '\''
+                + ", type='"
+                + type
+                + '\''
+                + ", flowType='"
+                + flowType
+                + '\''
+                + ", endpointType='"
+                + endpointType
+                + '\''
+                + ", refreshEndpoint='"
+                + refreshEndpoint
+                + '\''
+                + ", transferTypeDestination='"
+                + transferTypeDestination
+                + '\''
+                + ", audience='"
+                + audience
+                + '\''
+                + ", endpoint='"
+                + endpoint
+                + '\''
+                + ", refreshToken='[REDACTED]'"
+                + ", expiresIn='"
+                + expiresIn
+                + '\''
+                + ", authorization='[REDACTED]'"
+                + ", refreshAudience='"
+                + refreshAudience
+                + '\''
+                + ", context="
+                + context
+                + '}';
+    }
+}

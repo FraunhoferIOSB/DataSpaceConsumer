@@ -18,6 +18,10 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.extension;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+
+import static java.util.Optional.ofNullable;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessAndUsageControl;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.adapter.Adapter;
@@ -27,6 +31,7 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.discovery.Discovery;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.Gate;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCComponentConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCConfig;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.MxPortExecutionConfig;
 import jakarta.annotation.PostConstruct;
@@ -56,7 +61,7 @@ public class DSCPluginRegistry {
     private final ExtensionService extensionService;
 
     /** Cache mapping MX-Port names to their loaded plugins */
-    private final Map<String, LoadedPlugins> pluginCache = new HashMap<>();
+    private final Map<DSCConfig, LoadedPlugins> pluginCache = new HashMap<>();
 
     /**
      * Constructs the MXPortPluginRegistry with required services.
@@ -95,10 +100,10 @@ public class DSCPluginRegistry {
         LOGGER.info("Initializing plugins for {} configured MX-Port(s)", allPorts.size());
 
         for (DSCConfig portConfig : allPorts) {
-            String portName = portConfig.getName();
+            String portName = portConfig.name();
             try {
                 LOGGER.info("Loading and validating plugins for MX-Port: {}", portName);
-                getPluginsForPort(portName);
+                getPluginsForPort(portConfig);
                 LOGGER.info("Successfully loaded plugins for MX-Port: {}", portName);
             } catch (DSCExecuteException e) {
                 LOGGER.error(
@@ -119,20 +124,23 @@ public class DSCPluginRegistry {
      * <p>If the plugins are not yet cached for this MX-Port, they are loaded and configured lazily
      * on first access. Subsequent accesses return the cached plugins.
      *
-     * @param mxPortName the name of the MX-Port to retrieve plugins for
+     * @param portConfig the MX-Port config to retrieve plugins for
      * @return the LoadedPlugins containing all configured plugin instances
      * @throws DSCExecuteException if the MX-Port configuration is not found, required plugins are
      *     missing, or configuration injection fails
      */
-    public LoadedPlugins getPluginsForPort(String mxPortName) throws DSCExecuteException {
-        if (pluginCache.containsKey(mxPortName)) {
-            LOGGER.debug("Returning cached plugins for MX-Port: {}", mxPortName);
-            return pluginCache.get(mxPortName);
+    public LoadedPlugins getPluginsForPort(DSCConfig portConfig) throws DSCExecuteException {
+        LoadedPlugins plugins = pluginCache.getOrDefault(portConfig, null);
+        if (Objects.isNull(plugins)) {
+            LOGGER.debug("Loading and caching plugins for MX-Port: {}", portConfig.name());
+            plugins = loadPlugins(portConfig);
+            // Load configuration into plugins
+            configurePlugins(portConfig, plugins);
+            pluginCache.put(portConfig, plugins);
+        } else {
+            LOGGER.debug("Returning cached plugins for MX-Port: {}", portConfig.name());
         }
 
-        LOGGER.debug("Loading and caching plugins for MX-Port: {}", mxPortName);
-        LoadedPlugins plugins = loadAndCachePlugins(mxPortName);
-        pluginCache.put(mxPortName, plugins);
         return plugins;
     }
 
@@ -149,100 +157,81 @@ public class DSCPluginRegistry {
      *   <li>Returns a LoadedPlugins object containing all plugins
      * </ol>
      *
-     * @param mxPortName the name of the MX-Port to load plugins for
+     * @param portConfig the MX-Port config to load plugins for
      * @return the LoadedPlugins containing all configured plugin instances
      * @throws DSCExecuteException if the MX-Port configuration is not found, required plugins are
      *     missing, or configuration injection fails
      */
-    private LoadedPlugins loadAndCachePlugins(String mxPortName) throws DSCExecuteException {
-        // Retrieve the MX-Port configuration
-        DSCConfig portConfig = mxPortService.getPortByName(mxPortName);
-        if (portConfig == null) {
-            LOGGER.error("MX-Port configuration not found: {}", mxPortName);
-            throw new DSCExecuteException("MX-Port configuration not found: " + mxPortName);
-        }
-
+    public LoadedPlugins loadPlugins(DSCConfig portConfig) throws DSCExecuteException {
         // Load all plugins
-        @SuppressWarnings("rawtypes")
-        Discovery discovery = loadDiscoveryPlugin(portConfig);
-        AccessAndUsageControl accessControl = loadAccessAndUsageControlPlugin(portConfig);
-        Gate gate = loadGatePlugin(portConfig);
-        Converter converter = loadConverterPlugin(portConfig);
-        Adapter adapter = loadAdapterPlugin(portConfig);
+        Discovery<?> discovery =
+                loadPlugin(portConfig, DSCConfig::discovery, Discovery.class, "Discovery");
+        AccessAndUsageControl accessControl =
+                loadPlugin(
+                        portConfig,
+                        DSCConfig::accessAndUsageControl,
+                        AccessAndUsageControl.class,
+                        "AccessAndUsageControl");
+        Gate gate = loadPlugin(portConfig, DSCConfig::gate, Gate.class, "Gate");
+        Converter converter =
+                loadPlugin(portConfig, DSCConfig::converter, Converter.class, "Converter");
+        Adapter adapter = loadPlugin(portConfig, DSCConfig::adapter, Adapter.class, "Adapter");
 
-        // Validate that all required plugins are present
-        if (accessControl == null || gate == null || converter == null || adapter == null) {
-            LOGGER.error("Failed to load all required plugins for MX-Port: {}", mxPortName);
-            throw new DSCExecuteException(
-                    "Failed to load all required plugins for MX-Port: " + mxPortName);
-        }
-
-        // Inject configurations into plugins
-        LOGGER.debug("Injecting configurations for MX-Port plugins: {}", mxPortName);
-        injectConfiguration(discovery, portConfig.getDiscovery());
-        injectConfiguration(accessControl, portConfig.getAccessAndUsageControl());
-        injectConfiguration(gate, portConfig.getGate());
-        injectConfiguration(converter, portConfig.getConverter());
-        injectConfiguration(adapter, portConfig.getAdapter());
-
-        LOGGER.debug("All plugins loaded and configured for MX-Port: {}", mxPortName);
         return new LoadedPlugins(
-                discovery, accessControl, gate, converter, adapter, portConfig.getExecution());
+                discovery, accessControl, gate, converter, adapter, portConfig.execution());
     }
 
     /**
-     * Loads the Discovery plugin implementation for the specified MX-Port configuration.
+     * Injects the configuration of all plugins if the plugin implements {@link Configurable}.
      *
-     * @param portConfig the MX-Port configuration containing discovery component information
-     * @return the loaded Discovery implementation, or null if not configured or not found
+     * @param portConfig the MX-Port configuration containing the component's settings
+     * @throws DSCExecuteException if configuration injection fails
      */
-    @SuppressWarnings("rawtypes")
-    private Discovery loadDiscoveryPlugin(DSCConfig portConfig) {
-        return loadPluginByComponentConfig(portConfig.getDiscovery(), Discovery.class, "Discovery");
+    private void configurePlugins(DSCConfig portConfig, LoadedPlugins plugins)
+            throws DSCExecuteException {
+        configureIfConfigurable(plugins.discovery(), portConfig.discovery());
+        configureIfConfigurable(
+                plugins.accessAndUsageControl(), portConfig.accessAndUsageControl());
+        configureIfConfigurable(plugins.gate(), portConfig.gate());
+        configureIfConfigurable(plugins.converter(), portConfig.converter());
+        configureIfConfigurable(plugins.adapter(), portConfig.adapter());
+    }
+
+    private void configureIfConfigurable(Object plugin, DSCComponentConfig config) {
+        if (plugin instanceof Configurable configurablePlugin) {
+            injectConfiguration(configurablePlugin, config);
+        }
     }
 
     /**
-     * Loads the AccessAndUsageControl plugin implementation for the specified MX-Port
-     * configuration.
+     * Loads a plugin implementation for a given component of an MX-Port and injects its
+     * configuration if the plugin implements {@link Configurable}.
      *
-     * @param portConfig the MX-Port configuration containing implementation class information
-     * @return the loaded AccessAndUsageControl implementation, or null if not found
+     * @param <T> the plugin interface type (e.g. {@code Gate}, {@code Converter})
+     * @param portConfig the MX-Port configuration containing the component's settings
+     * @param componentResolver a function that extracts the component configuration from the port
+     *     config
+     * @param pluginType the plugin interface/class that the implementation must implement
+     * @param pluginName the human-readable name of the component, used for error messages
+     * @return the loaded plugin instance, guaranteed non-null
+     * @throws DSCExecuteException if the component configuration is missing/invalid or no matching
+     *     plugin implementation is found
      */
-    private AccessAndUsageControl loadAccessAndUsageControlPlugin(DSCConfig portConfig) {
-        return loadPluginByComponentConfig(
-                portConfig.getAccessAndUsageControl(),
-                AccessAndUsageControl.class,
-                "AccessAndUsageControl");
-    }
+    private <T> T loadPlugin(
+            DSCConfig portConfig,
+            Function<DSCConfig, DSCComponentConfig> componentResolver,
+            Class<T> pluginType,
+            String pluginName)
+            throws DSCExecuteException {
+        DSCComponentConfig componentConfig = componentResolver.apply(portConfig);
 
-    /**
-     * Loads the Gate plugin implementation for the specified MX-Port configuration.
-     *
-     * @param portConfig the MX-Port configuration containing gate class information
-     * @return the loaded Gate implementation, or null if not found
-     */
-    private Gate loadGatePlugin(DSCConfig portConfig) {
-        return loadPluginByComponentConfig(portConfig.getGate(), Gate.class, "Gate");
-    }
-
-    /**
-     * Loads the Converter plugin implementation for the specified MX-Port configuration.
-     *
-     * @param portConfig the MX-Port configuration containing converter class information
-     * @return the loaded Converter implementation, or null if not found
-     */
-    private Converter loadConverterPlugin(DSCConfig portConfig) {
-        return loadPluginByComponentConfig(portConfig.getConverter(), Converter.class, "Converter");
-    }
-
-    /**
-     * Loads the Adapter plugin implementation for the specified MX-Port configuration.
-     *
-     * @param portConfig the MX-Port configuration containing adapter class information
-     * @return the loaded Adapter implementation, or null if not found
-     */
-    private Adapter loadAdapterPlugin(DSCConfig portConfig) {
-        return loadPluginByComponentConfig(portConfig.getAdapter(), Adapter.class, "Adapter");
+        return ofNullable(loadPluginByComponentConfig(componentConfig, pluginType, pluginName))
+                .orElseThrow(
+                        () ->
+                                new DSCExecuteException(
+                                        String.format(
+                                                "Failed to load plugin %s for MX-Port %s",
+                                                pluginName, portConfig.name())));
     }
 
     /**
@@ -268,7 +257,7 @@ public class DSCPluginRegistry {
             return null;
         }
 
-        String implementationClassName = componentConfig.getImplementation();
+        String implementationClassName = componentConfig.implementation();
         if (implementationClassName == null || implementationClassName.isEmpty()) {
             LOGGER.warn("No implementation class specified for component: {}", componentName);
             return null;
@@ -328,103 +317,52 @@ public class DSCPluginRegistry {
      * @throws DSCExecuteException if configuration injection fails
      */
     private void injectConfiguration(
-            Object plugin,
+            Configurable plugin,
             de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config.DSCComponentConfig
                     componentConfig)
             throws DSCExecuteException {
-        if (plugin == null || componentConfig == null) {
-            return;
-        }
-
         // Check if plugin implements Configurable interface and cast in one step
-        if (plugin instanceof Configurable configurable) {
-            LOGGER.debug("Injecting configuration into plugin: {}", plugin.getClass().getName());
-            try {
-                configurable.setConfiguration(componentConfig.getConfig());
-            } catch (IllegalArgumentException e) {
-                LOGGER.error(
-                        "Failed to inject configuration for plugin: {}",
-                        plugin.getClass().getName(),
-                        e);
-                throw new DSCExecuteException("Configuration injection failed", e);
-            }
-
-            LOGGER.debug(
-                    "Configuration injected successfully for plugin: {}",
-                    plugin.getClass().getName());
+        LOGGER.debug("Injecting configuration into plugin: {}", plugin.getClass().getName());
+        try {
+            plugin.setConfiguration(componentConfig.config());
+        } catch (IllegalArgumentException e) {
+            LOGGER.error(
+                    "Failed to inject configuration for plugin: {}",
+                    plugin.getClass().getName(),
+                    e);
+            throw new DSCExecuteException("Configuration injection failed", e);
         }
+
+        LOGGER.debug(
+                "Configuration injected successfully for plugin: {}", plugin.getClass().getName());
     }
 
     /**
      * Inner class containing all loaded plugins for a specific MX-Port.
      *
-     * <p>This immutable container holds references to all five configured plugin components. All
-     * plugins are guaranteed to be non-null, discovery may be null if optional.
+     * <p>This immutable container holds references to all five configured plugin components.
+     *
+     * @param discovery the Discovery plugin
+     * @param accessAndUsageControl the AccessAndUsageControl plugin
+     * @param gate the Gate plugin
+     * @param converter the Converter plugin
+     * @param adapter the Adapter plugin
+     * @param executionConfig the execution configuration for this MX-Port, may be null
      */
-    public static final class LoadedPlugins {
-        @SuppressWarnings("rawtypes")
-        private final Discovery discovery;
+    public record LoadedPlugins(
+            Discovery<?> discovery,
+            AccessAndUsageControl accessAndUsageControl,
+            Gate gate,
+            Converter converter,
+            Adapter adapter,
+            MxPortExecutionConfig executionConfig) {
 
-        private final AccessAndUsageControl accessAndUsageControl;
-        private final Gate gate;
-        private final Converter converter;
-        private final Adapter adapter;
-        private final MxPortExecutionConfig executionConfig;
-
-        /**
-         * Constructs a LoadedPlugins container with all plugin instances and execution
-         * configuration.
-         *
-         * @param discovery the Discovery plugin (may be null if optional)
-         * @param accessAndUsageControl the AccessAndUsageControl plugin (non-null)
-         * @param gate the Gate plugin (non-null)
-         * @param converter the Converter plugin (non-null)
-         * @param adapter the Adapter plugin (non-null)
-         * @param executionConfig the execution configuration for this MX-Port
-         */
-        public LoadedPlugins(
-                @SuppressWarnings("rawtypes") Discovery discovery,
-                AccessAndUsageControl accessAndUsageControl,
-                Gate gate,
-                Converter converter,
-                Adapter adapter,
-                MxPortExecutionConfig executionConfig) {
-            this.discovery = discovery;
-            this.accessAndUsageControl = accessAndUsageControl;
-            this.gate = gate;
-            this.converter = converter;
-            this.adapter = adapter;
-            this.executionConfig = executionConfig;
-        }
-
-        @SuppressWarnings("rawtypes")
-        public Discovery getDiscovery() {
-            return discovery;
-        }
-
-        public AccessAndUsageControl getAccessAndUsageControl() {
-            return accessAndUsageControl;
-        }
-
-        public Gate getGate() {
-            return gate;
-        }
-
-        public Converter getConverter() {
-            return converter;
-        }
-
-        public Adapter getAdapter() {
-            return adapter;
-        }
-
-        /**
-         * Returns the execution configuration for this MX-Port.
-         *
-         * @return the execution configuration
-         */
-        public MxPortExecutionConfig getExecutionConfig() {
-            return executionConfig;
+        public LoadedPlugins {
+            Objects.requireNonNull(discovery);
+            Objects.requireNonNull(accessAndUsageControl);
+            Objects.requireNonNull(gate);
+            Objects.requireNonNull(converter);
+            Objects.requireNonNull(adapter);
         }
     }
 }

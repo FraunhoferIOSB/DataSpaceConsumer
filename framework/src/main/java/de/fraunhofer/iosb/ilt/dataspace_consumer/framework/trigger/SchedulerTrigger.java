@@ -15,9 +15,11 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.trigger;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCExecutor;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.framework.DSCService;
@@ -69,11 +71,11 @@ public class SchedulerTrigger extends Trigger {
 
         for (DSCConfig config : mxPortService.getMxPorts()) {
             try {
-                schedule(config.getName());
+                schedule(config.name());
             } catch (Exception e) {
                 LOGGER.error(
                         "SchedulerTrigger: Failed to schedule MX-Port '{}': {}",
-                        config.getName(),
+                        config.name(),
                         e.getMessage(),
                         e);
             }
@@ -102,7 +104,7 @@ public class SchedulerTrigger extends Trigger {
             return;
         }
 
-        TriggerConfig trigger = portConfig.getTrigger();
+        TriggerConfig trigger = portConfig.trigger();
         if (trigger == null
                 || trigger.getScheduler() == null
                 || !Boolean.TRUE.equals(trigger.getScheduler().getEnabled())) {
@@ -132,13 +134,36 @@ public class SchedulerTrigger extends Trigger {
         Runnable task =
                 () -> {
                     try {
+                        long delaySeconds = ThreadLocalRandom.current().nextLong(0, 61);
+
                         LOGGER.debug(
-                                "SchedulerTrigger: Triggering MX-Port '{}' via scheduler.",
-                                mxPortName);
-                        execute(mxPortName, portConfig.getTimeout());
+                                "SchedulerTrigger: Triggering MX-Port '{}' with random delay of {}"
+                                        + " seconds.",
+                                mxPortName,
+                                delaySeconds);
+
+                        taskScheduler.schedule(
+                                () -> {
+                                    try {
+                                        LOGGER.debug(
+                                                "SchedulerTrigger: Executing MX-Port '{}' after"
+                                                        + " delay.",
+                                                mxPortName);
+                                        executeAsync(portConfig, portConfig.timeout());
+                                    } catch (Exception e) {
+                                        LOGGER.error(
+                                                "SchedulerTrigger: Error while executing MX-Port"
+                                                        + " '{}'",
+                                                mxPortName,
+                                                e);
+                                    }
+                                },
+                                Instant.now().plusSeconds(delaySeconds));
+
                     } catch (Exception e) {
                         LOGGER.error(
-                                "SchedulerTrigger: Error while executing MX-Port '{}'",
+                                "SchedulerTrigger: Error while scheduling delayed execution for"
+                                        + " MX-Port '{}'",
                                 mxPortName,
                                 e);
                     }

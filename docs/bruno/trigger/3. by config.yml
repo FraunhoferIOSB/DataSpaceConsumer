@@ -1,0 +1,64 @@
+info:
+  name: 3. by config
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{url}}/trigger/config"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "my-mx-port",
+        "discovery": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.aas_dsp_endpoints_extension.DiscoveryImpl",
+          "config": {
+            "endpoints": [
+              {
+                "assetId": "asset-id",
+                "dspEndpoint": "ignored",
+                "interfaceType": "SUBMODEL-REPOSITORY"
+              }
+            ]
+          }
+        },
+        "accessAndUsageControl": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.AccessUsageControlImpl",
+          "config": {
+            "baseUrl": "http://localhost:8081/management",
+            "counterPartyAddress": "http://provider-controlplane/dsp/2025-1",
+            "counterPartyId": "did:web:provider:id",
+            "apiKey": "password"
+          }
+        },
+        "gate": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.json_rest_gate_extension.GateImpl",
+          "config": {
+            "endpoint": "http://provider-dataplane:9500/public"
+          }
+        },
+        "converter": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.simple_converter_extension.SimpleConverter",
+          "config": {
+            "operation": "indexAt",
+            "value": 0
+          }
+        },
+        "adapter": {
+          "implementation": "de.fraunhofer.iosb.ilt.dataspace_consumer.passthrough_adapter_extension.AdapterImpl",
+          "config": {}
+        },
+        "timeout": 1000000,
+        "execution": {
+          "maxGateRequests": 10
+        }
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

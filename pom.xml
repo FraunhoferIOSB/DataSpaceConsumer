@@ -5,7 +5,7 @@
 
   <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
   <artifactId>parent</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.3.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Dataspace Consumer Parent</name>
@@ -38,7 +38,7 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <spotless.version>3.4.0</spotless.version>
+    <spotless.version>3.10.4</spotless.version>
   </properties>
 
   <repositories>
