@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static java.util.Optional.ofNullable;
+
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.config.Configurable;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.Converter;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.converter.ConverterCapabilities;
@@ -29,27 +31,59 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.gate.GateResponseFormat;
 import org.pf4j.Extension;
 
+/**
+ * A simple Converter implementation used for demonstration and testing purposes.
+ *
+ * <p>Supported operations (configured via {@link #setConfiguration(Map)}):
+ *
+ * <ul>
+ *   <li><b>indexAt</b> - selects a single response by index and returns its JSON payload
+ *   <li><b>merge</b> - merges multiple responses into a single wrapped JSON object
+ * </ul>
+ *
+ * The converter advertises support for JSON {@link GateResponseFormat}s.
+ */
 @Extension
 public class SimpleConverter implements Converter, Configurable {
     private Filter filter;
 
-    public SimpleConverter() {}
+    /**
+     * Explicit public no-argument constructor required by the PF4J extension framework. It is
+     * intentionally empty; the framework instantiates extensions via reflection.
+     */
+    public SimpleConverter() {
+        // Intentionally empty: required by the PF4J extension framework which instantiates
+        // extensions via reflection. Keeping an explicit no-arg constructor improves clarity
+        // for static analysis tools (see SONAR java:S1186).
+    }
 
+    /**
+     * Convert a list of {@link GateResponse} objects according to the configured filter operation.
+     *
+     * <p>If the configured operation is {@code indexAt}, the converter returns the JSON payload of
+     * the response at the configured index. If the configured operation is {@code merge}, all
+     * responses are wrapped into a single JSON object using {@link GateResponsesToWrappedJson}.
+     *
+     * @param responses the list of gate responses to convert; must not be null
+     * @return a {@link ConverterResponse} containing the converted payload and its type
+     * @throws UnsupportedOperationException if the configured filter operation is not supported or
+     *     if a response has an unsupported format
+     * @throws DSCExecuteException if an error occurs during conversion execution
+     */
     @Override
     public ConverterResponse convert(List<GateResponse> responses)
             throws UnsupportedOperationException, DSCExecuteException {
-        switch (filter.operation()) {
-            case FilterOperation.INDEX_AT:
+        return switch (filter.operation()) {
+            case FilterOperation.INDEX_AT -> {
                 GateResponse response = getGateResponseOnIndex(responses);
-                return new ConverterResponse(ConverterPayloadType.JSON, response.getPayloadBytes());
-
-            case FilterOperation.MERGE:
+                yield new ConverterResponse(
+                        ConverterPayloadType.JSON, response.payload(), response.headers());
+            }
+            case FilterOperation.MERGE -> {
                 GateResponsesToWrappedJson merger = new GateResponsesToWrappedJson();
-                return merger.wrapAllAsJsonObject(responses);
-            default:
-                throw new DSCExecuteException(
-                        "Unsupported filter operation: " + filter.operation());
-        }
+                yield merger.wrapAllAsJsonObject(responses);
+            }
+        };
     }
 
     private GateResponse getGateResponseOnIndex(List<GateResponse> responses) {
@@ -60,19 +94,39 @@ public class SimpleConverter implements Converter, Configurable {
             throw new UnsupportedOperationException("Invalid Payload-Typ", e);
         }
         GateResponse response = responses.get(indexAt);
-        Optional<GateResponseFormat> format = response.getFormat();
+        Optional<GateResponseFormat> format = ofNullable(response.format());
         if (format.isEmpty() || format.get() != GateResponseFormat.JSON) {
             throw new UnsupportedOperationException(
-                    "Invalid response format: " + response.getFormat());
+                    "Invalid response format: " + response.format());
         }
         return response;
     }
 
+    /**
+     * Returns the converter capabilities advertised by this implementation.
+     *
+     * @return a {@link ConverterCapabilities} instance declaring supported response formats
+     */
     @Override
     public ConverterCapabilities getCapabilities() {
         return new ConverterCapabilities(List.of(GateResponseFormat.JSON));
     }
 
+    /**
+     * Configure this converter instance.
+     *
+     * <p>Expected configuration fields:
+     *
+     * <ul>
+     *   <li><b>operation</b> (String) - either "indexAt" or "merge" to select the filter operation
+     *   <li><b>value</b> (Object, optional) - the operation-specific value. For {@code indexAt}
+     *       this should be an integer index (0-based) into the responses list
+     * </ul>
+     *
+     * @param config a map containing configuration keys and values; must not be null
+     * @throws IllegalArgumentException if the configuration is null, missing required fields, or
+     *     contains values of an unexpected type
+     */
     @Override
     public void setConfiguration(Map<String, Object> config) throws IllegalArgumentException {
         if (config == null) {

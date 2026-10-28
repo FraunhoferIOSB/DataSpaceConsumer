@@ -23,13 +23,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPFilter;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.AuthorizationContext;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.InitData;
-import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.LoggingUtil;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.AvailableEdrDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.EdrDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.InitNegotiationDTO;
@@ -40,6 +39,13 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+/**
+ * HTTP client for interacting with an EDC (Eclipse DataSpace Connector) management API.
+ *
+ * <p>This class provides convenience methods to query the catalog for policies, initiate contract
+ * negotiations, retrieve available EDRs, fetch access tokens (EDR) and poll the negotiation state.
+ * It handles HTTP requests, response validation and JSON parsing via {@code EdcClientParser}.
+ */
 public class EdcClient {
 
     private String baseURL;
@@ -48,7 +54,19 @@ public class EdcClient {
     private String apiKey;
     private OkHttpClient client;
     private final EdcClientParser parser;
+    private final ObjectMapper mapper;
 
+    /**
+     * Create a new EdcClient instance.
+     *
+     * @param baseURL base URL of the EDC management API (must not be null)
+     * @param counterPartyId identifier of the counter-party (must not be null)
+     * @param counterPartyAddress address/URL of the counter-party connector (must not be null)
+     * @param apiKey API key used for authenticating against the EDC management API (must not be
+     *     null)
+     * @param httpClient optional custom OkHttpClient. If {@code null}, a default client will be
+     *     created
+     */
     public EdcClient(
             String baseURL,
             String counterPartyId,
@@ -62,11 +80,12 @@ public class EdcClient {
         this.apiKey = Objects.requireNonNull(apiKey);
         this.client = Objects.requireNonNullElseGet(httpClient, OkHttpClient::new);
         this.parser = new EdcClientParser();
+        this.mapper = new ObjectMapper();
     }
 
     private static final Logger LOGGER = Logger.getLogger(EdcClient.class.getName());
     private static final String LOG_REQUEST_MSG_FORMAT = "{0} request body: {1}";
-    private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body: {1}";
+    private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body length: {1}";
     private static final String APPLICATION_JSON = "application/json";
 
     private Response getHttpResponse(Request request, String requestName) {
@@ -138,11 +157,7 @@ public class EdcClient {
     }
 
     private String getResponseString(
-            String endpoint,
-            String body,
-            String httpMethod,
-            String loggingName,
-            boolean sensitiveLogging) {
+            String endpoint, String body, String httpMethod, String loggingName) {
         LOGGER.log(Level.FINE, LOG_REQUEST_MSG_FORMAT, new Object[] {loggingName, body});
         Request request = getHttpRequest(endpoint, httpMethod, body);
 
@@ -151,15 +166,21 @@ public class EdcClient {
         LOGGER.log(
                 Level.FINE,
                 LOG_RESPONSE_MSG_FORMAT,
-                new Object[] {
-                    loggingName,
-                    sensitiveLogging
-                            ? LoggingUtil.maskToken(responseBodyString, 10)
-                            : responseBodyString
-                });
+                new Object[] {loggingName, responseBodyString.length()});
         return responseBodyString;
     }
 
+    /**
+     * Fetches the policy (InitData) for the supplied DSP request by querying the EDC catalog.
+     *
+     * <p>The method builds a catalog query from the filter contained in the {@code dspRequest} and
+     * sends it to the EDC management API. The response is parsed into an {@link InitData}
+     * representation.
+     *
+     * @param dspRequest request containing DSP filters used for the catalog query
+     * @return parsed {@link InitData} describing the policy and any relevant metadata
+     * @throws DSCExecuteException on HTTP errors, timeouts or JSON parsing failures
+     */
     public InitData fetchPolicy(DSPRequest dspRequest) throws DSCExecuteException {
 
         String loggingName = "policy";
@@ -172,14 +193,21 @@ public class EdcClient {
                         EdcEndpointTemplates.catalogEndpoint(baseURL),
                         requestBodyString,
                         "POST",
-                        loggingName,
-                        false);
-        JsonNode root =
-                parser.parseJson(
-                        () -> parser.getObjectMapper().readTree(responseBodyString), loggingName);
-        return parser.parsePolicy(root);
+                        loggingName);
+        return parser.parsePolicy(responseBodyString);
     }
 
+    /**
+     * Initiates a contract negotiation at the counter-party using the provided init data.
+     *
+     * <p>The contained policy from {@code initData} will be sent to the counter-party via the EDC
+     * contract negotiation endpoint. The initial negotiation response is parsed into an {@link
+     * InitNegotiationDTO} containing at least the negotiation id.
+     *
+     * @param initData initialization data containing the policy to negotiate
+     * @return {@link InitNegotiationDTO} with information about the initiated negotiation
+     * @throws DSCExecuteException on HTTP errors, timeouts or JSON parsing failures
+     */
     public InitNegotiationDTO initiateNegotiation(InitData initData) throws DSCExecuteException {
 
         String loggingName = "negotiation";
@@ -190,20 +218,25 @@ public class EdcClient {
                         EdcEndpointTemplates.contractNegotiationEndpoint(baseURL),
                         requestBodyString,
                         "POST",
-                        loggingName,
-                        false);
+                        loggingName);
         InitNegotiationDTO initNegotiationDTO =
                 parser.parseJson(
-                        () ->
-                                parser.getObjectMapper()
-                                        .readValue(responseBodyString, InitNegotiationDTO.class),
+                        () -> mapper.readValue(responseBodyString, InitNegotiationDTO.class),
                         loggingName);
 
-        LOGGER.log(Level.FINE, "negotiation id: {0}", initNegotiationDTO.id());
+        LOGGER.log(Level.FINE, "negotiation: {0}", initNegotiationDTO);
 
         return initNegotiationDTO;
     }
 
+    /**
+     * Queries the EDC for available EDRs (endpoint data references) for the given asset id.
+     *
+     * @param assetId asset identifier to query EDRs for
+     * @return list of {@link AvailableEdrDTO} describing available EDRs (may be empty)
+     * @throws DSCExecuteException on HTTP or parsing errors (thrown as runtime exception by
+     *     helpers)
+     */
     public List<AvailableEdrDTO> getAvailableEDRResponse(String assetId) {
         String loggingName = "available EDRs";
         String requestBodyString = EdcRequestTemplates.availableEdrQuery(assetId);
@@ -212,17 +245,22 @@ public class EdcClient {
                         EdcEndpointTemplates.availableEDRsEndpoint(baseURL),
                         requestBodyString,
                         "POST",
-                        loggingName,
-                        false);
+                        loggingName);
         return parser.parseJson(
                 () ->
-                        parser.getObjectMapper()
-                                .readValue(
-                                        responseBodyString,
-                                        new TypeReference<List<AvailableEdrDTO>>() {}),
+                        mapper.readValue(
+                                responseBodyString, new TypeReference<List<AvailableEdrDTO>>() {}),
                 loggingName);
     }
 
+    /**
+     * Fetches an EDR (access token) for the given transfer process id.
+     *
+     * @param transferProcessId transfer process identifier used to locate the token
+     * @return parsed {@link EdrDTO} containing the access token and metadata
+     * @throws DSCExecuteException on HTTP or parsing errors (thrown as runtime exception by
+     *     helpers)
+     */
     public EdrDTO fetchToken(String transferProcessId) {
         String loggingName = "token";
         String responseBodyString =
@@ -230,13 +268,20 @@ public class EdcClient {
                         EdcEndpointTemplates.tokenEndpoint(baseURL, transferProcessId),
                         null,
                         "GET",
-                        loggingName,
-                        true);
+                        loggingName);
         return parser.parseJson(
-                () -> parser.getObjectMapper().readValue(responseBodyString, EdrDTO.class),
-                loggingName);
+                () -> mapper.readValue(responseBodyString, EdrDTO.class), loggingName);
     }
 
+    /**
+     * Retrieves the current negotiation state for the negotiation referenced in the {@link
+     * AuthorizationContext}.
+     *
+     * @param context authorization context containing the negotiation id to poll
+     * @return {@link NegotiationStateDTO} representing the current negotiation state
+     * @throws DSCExecuteException on HTTP or parsing errors (thrown as runtime exception by
+     *     helpers)
+     */
     public NegotiationStateDTO getNegotiationState(AuthorizationContext context) {
         String loggingName = "negotiation status";
         String responseBodyString =
@@ -245,15 +290,12 @@ public class EdcClient {
                                 baseURL, context.negotiationId()),
                         null,
                         "GET",
-                        loggingName,
-                        false);
+                        loggingName);
         NegotiationStateDTO negotiationStateDTO =
                 parser.parseJson(
-                        () ->
-                                parser.getObjectMapper()
-                                        .readValue(responseBodyString, NegotiationStateDTO.class),
+                        () -> mapper.readValue(responseBodyString, NegotiationStateDTO.class),
                         loggingName);
-        LOGGER.log(Level.FINE, "state: {0}", negotiationStateDTO.state());
+        LOGGER.log(Level.FINE, "state: {0}", negotiationStateDTO);
         return negotiationStateDTO;
     }
 }

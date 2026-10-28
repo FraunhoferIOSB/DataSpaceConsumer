@@ -24,6 +24,16 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subpr
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 
+/**
+ * Factory for discovery and gate access requests for the DSP subprotocol.
+ *
+ * <p>This class creates discovery and gate access requests processed by the DSP subprotocol. The
+ * discovery request (package-private) queries the catalog for AAS registries. The public method
+ * {@link #getGateAccessRequests(List)} creates exactly one {@link AccessRequest} instance for each
+ * unique assetId from the discovery results.
+ *
+ * <p>The produced AccessRequest objects are concrete {@link DSPRequest} instances.
+ */
 public class DiscoveryRequestFactory {
 
     AccessRequest getDiscoveryRequest(String baseUrl) {
@@ -35,6 +45,19 @@ public class DiscoveryRequestFactory {
         return new DSPRequest(filter, baseUrl + "/v3/catalog/request");
     }
 
+    /**
+     * Creates gate/EDC access requests based on discovery results.
+     *
+     * <p>For each unique assetId in the provided list exactly one {@link AccessRequest} is created.
+     * Duplicates are filtered using {@link ResultItem#assetId()}; the order of first occurrences is
+     * preserved. For each unique entry a {@link DSPRequest} with a {@link DSPFilter} is created
+     * that queries the EDC asset ID (property "https://w3id.org/edc/v0.0.1/ns/id").
+     *
+     * @param items list of discovery results ({@link ResultItem})
+     * @return list of {@link AccessRequest} objects (concrete {@link DSPRequest}) for the
+     *     corresponding gate endpoints
+     * @throws DSCExecuteException if processing the items fails
+     */
     public List<AccessRequest> getGateAccessRequests(List<ResultItem> items)
             throws DSCExecuteException {
 

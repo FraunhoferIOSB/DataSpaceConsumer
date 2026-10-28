@@ -33,9 +33,11 @@ public interface Adapter extends ExtensionPoint {
      * Adapt the normalized data for the application.
      *
      * @param request the AdapterRequest containing the normalized payload and optional metadata
+     * @return Adapter response, may be null if the result is propagated in another way (i.e.,
+     *     asynchronous requests).
      * @throws UnsupportedPayloadTypeException if the payload type is not supported by this Adapter
      * @throws DSCExecuteException if an error occurs during adaptation
      */
-    void adapt(ConverterResponse request)
+    AdapterResponse adapt(ConverterResponse request)
             throws UnsupportedPayloadTypeException, DSCExecuteException;
 }

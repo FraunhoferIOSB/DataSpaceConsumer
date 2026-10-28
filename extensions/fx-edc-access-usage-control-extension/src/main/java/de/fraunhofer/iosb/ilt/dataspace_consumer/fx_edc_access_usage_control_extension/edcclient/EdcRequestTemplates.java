@@ -22,14 +22,9 @@ public final class EdcRequestTemplates {
     public static String contractNegotiation(String counterPartyAddress, String policyJson) {
         return """
         {
-        "@context": [
-            "https://w3id.org/tractusx/auth/v1.0.0",
-            "https://w3id.org/catenax/2025/9/policy/context.jsonld",
-            "https://w3id.org/catenax/2025/9/policy/odrl.jsonld",
-            "https://w3id.org/dspace/2025/1/context.jsonld",
-            "https://w3id.org/edc/dspace/v0.0.1",
-            { "fx-policy": "https://w3id.org/factoryx/policy/v1.0/" }
-        ],
+        "@context": {
+          "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        },
         "@type": "https://w3id.org/edc/v0.0.1/ns/ContractRequest",
         "https://w3id.org/edc/v0.0.1/ns/counterPartyAddress": "%s",
         "https://w3id.org/edc/v0.0.1/ns/protocol": "dataspace-protocol-http:2025-1",

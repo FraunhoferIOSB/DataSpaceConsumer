@@ -6,23 +6,23 @@
   <parent>
     <groupId>de.fraunhofer.iosb.ilt.dataspace_consumer</groupId>
     <artifactId>parent</artifactId>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.3.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>api</artifactId>
-  <version>0.1.1-SNAPSHOT</version>
+  <version>0.3.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Dataspace Consumer API</name>
   <description>API interfaces for building Dataspace Consumer extensions</description>
 
   <properties>
-    <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+    <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
 
-    <dataspace_consumer.bom.version>0.0.2-SNAPSHOT</dataspace_consumer.bom.version>
+    <dataspace_consumer.bom.version>0.3.1-SNAPSHOT</dataspace_consumer.bom.version>
   </properties>
 
   <dependencyManagement>

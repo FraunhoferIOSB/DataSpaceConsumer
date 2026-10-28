@@ -15,138 +15,45 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config;
 
+import java.util.Objects;
+
 /**
  * Configuration for a single MX-Port instance.
  *
  * <p>This POJO is used to bind the {@code mx-port} entries from the application configuration (e.g.
  * application.yaml). It contains references to component configurations for each layer (access
  * control, gate, converter and adapter) as well as optional negotiation and trigger settings.
+ *
+ * @param name the name of this MX-Port.
+ * @param discovery the configuration for the discovery component.
+ * @param accessAndUsageControl the configuration for the accessAndUsageControl component.
+ * @param gate the configuration for the gate component.
+ * @param converter the configuration for the converter component.
+ * @param adapter the configuration for the adapter component.
+ * @param trigger the optional trigger configuration for this MX-Port (resthook, scheduler, ...).
+ *     May be null.
+ * @param timeout the timeout after which the execution will be aborted.
+ * @param synchronous whether this mx port will run synchronously and return its result directly.
+ * @param execution the execution configuration for this MX-Port.
  */
-public class DSCConfig {
-    private String name;
-    private DSCComponentConfig discovery;
-    private DSCComponentConfig accessAndUsageControl;
-    private DSCComponentConfig gate;
-    private DSCComponentConfig converter;
-    private DSCComponentConfig adapter;
-    private TriggerConfig trigger;
-    private int timeout;
-    private MxPortExecutionConfig execution = new MxPortExecutionConfig();
+public record DSCConfig(
+        String name,
+        DSCComponentConfig discovery,
+        DSCComponentConfig accessAndUsageControl,
+        DSCComponentConfig gate,
+        DSCComponentConfig converter,
+        DSCComponentConfig adapter,
+        TriggerConfig trigger,
+        Integer timeout,
+        Boolean synchronous,
+        MxPortExecutionConfig execution) {
+    private static final String DEFAULT_NAME = "<unnamed>";
+    private static final int DEFAULT_TIMEOUT = 0;
+    private static final boolean DEFAULT_SYNCHRONOUS = true;
 
-    /**
-     * Returns the configured name of this MX-Port.
-     *
-     * @return the MX-Port name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Returns the configuration for the Discovery component.
-     *
-     * @return discovery component config
-     */
-    public DSCComponentConfig getDiscovery() {
-        return discovery;
-    }
-
-    /**
-     * Returns the configuration for the Access and Usage Control component.
-     *
-     * @return access control component config
-     */
-    public DSCComponentConfig getAccessAndUsageControl() {
-        return accessAndUsageControl;
-    }
-
-    /**
-     * Returns the configuration for the Gate component.
-     *
-     * @return gate component config
-     */
-    public DSCComponentConfig getGate() {
-        return gate;
-    }
-
-    /**
-     * Returns the configuration for the Converter component.
-     *
-     * @return converter component config
-     */
-    public DSCComponentConfig getConverter() {
-        return converter;
-    }
-
-    /**
-     * Returns the configuration for the Adapter component.
-     *
-     * @return adapter component config
-     */
-    public DSCComponentConfig getAdapter() {
-        return adapter;
-    }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    /**
-     * Returns the optional trigger configuration for this MX-Port (resthook, scheduler, ...).
-     *
-     * @return trigger configuration or {@code null}
-     */
-    public TriggerConfig getTrigger() {
-        return trigger;
-    }
-
-    public void setTrigger(TriggerConfig trigger) {
-        this.trigger = trigger;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setDiscovery(DSCComponentConfig discovery) {
-        this.discovery = discovery;
-    }
-
-    public void setAccessAndUsageControl(DSCComponentConfig accessAndUsageControl) {
-        this.accessAndUsageControl = accessAndUsageControl;
-    }
-
-    public void setGate(DSCComponentConfig gate) {
-        this.gate = gate;
-    }
-
-    public void setConverter(DSCComponentConfig converter) {
-        this.converter = converter;
-    }
-
-    public void setAdapter(DSCComponentConfig adapter) {
-        this.adapter = adapter;
-    }
-
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
-    }
-
-    /**
-     * Returns the execution configuration for this MX-Port.
-     *
-     * @return the execution configuration
-     */
-    public MxPortExecutionConfig getExecution() {
-        return execution;
-    }
-
-    /**
-     * Sets the execution configuration for this MX-Port.
-     *
-     * @param execution the execution configuration
-     */
-    public void setExecution(MxPortExecutionConfig execution) {
-        this.execution = execution;
+    public DSCConfig {
+        name = Objects.requireNonNullElse(name, DEFAULT_NAME);
+        timeout = Objects.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
+        synchronous = Objects.requireNonNullElse(synchronous, DEFAULT_SYNCHRONOUS);
     }
 }

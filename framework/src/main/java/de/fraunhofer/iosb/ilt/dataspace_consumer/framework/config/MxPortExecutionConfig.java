@@ -21,25 +21,10 @@ package de.fraunhofer.iosb.ilt.dataspace_consumer.framework.config;
  * <p>This POJO contains concurrency and execution-related settings for an MX-Port, such as the
  * maximum number of concurrent gate requests. These settings control how the MX-Port execution
  * behaves at runtime.
+ *
+ * @param maxGateRequests the maximum number of concurrent gate requests for this MX-Port.
  */
-public class MxPortExecutionConfig {
-    private int maxGateRequests = 10;
+public record MxPortExecutionConfig(int maxGateRequests) {
 
-    /**
-     * Returns the maximum number of concurrent gate requests for this MX-Port.
-     *
-     * @return the max concurrent gate requests (default: 10)
-     */
-    public int getMaxGateRequests() {
-        return maxGateRequests;
-    }
-
-    /**
-     * Sets the maximum number of concurrent gate requests for this MX-Port.
-     *
-     * @param maxGateRequests the max concurrent gate requests
-     */
-    public void setMaxGateRequests(int maxGateRequests) {
-        this.maxGateRequests = maxGateRequests;
-    }
+    public static final MxPortExecutionConfig DEFAULT = new MxPortExecutionConfig(10);
 }
