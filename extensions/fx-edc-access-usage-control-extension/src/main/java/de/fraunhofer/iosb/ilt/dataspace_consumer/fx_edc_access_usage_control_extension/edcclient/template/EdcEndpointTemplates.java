@@ -22,7 +22,7 @@ public final class EdcEndpointTemplates {
     private static final String MGMT_API_VERSION = "v3";
 
     public static String initiateTransferProcess(String baseURL) {
-        return String.format("%s/%s/transferprocesses", MGMT_API_VERSION, baseURL);
+        return String.format("%s/%s/transferprocesses", baseURL, MGMT_API_VERSION);
     }
 
     public static String getTransferProcessStatus(String baseURL, String id) {
@@ -30,7 +30,7 @@ public final class EdcEndpointTemplates {
     }
 
     public static String requestCatalog(String baseURL) {
-        return String.format("%s/%s/catalog/request", MGMT_API_VERSION, baseURL);
+        return String.format("%s/%s/catalog/request", baseURL, MGMT_API_VERSION);
     }
 
     public static String initiateContractNegotiation(String baseURL) {

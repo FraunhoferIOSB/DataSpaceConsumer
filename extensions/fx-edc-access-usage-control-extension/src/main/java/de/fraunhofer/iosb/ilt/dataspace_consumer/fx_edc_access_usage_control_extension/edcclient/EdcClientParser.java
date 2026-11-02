@@ -15,6 +15,8 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient;
 
+import static java.util.Optional.ofNullable;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +37,7 @@ public class EdcClientParser {
 
     private static final String ODRL_PREFIX = "http://www.w3.org/ns/odrl/2/";
     private static final String DCAT_PREFIX = "http://www.w3.org/ns/dcat#";
+    private static final String DSPACE_PREFIX = "https://w3id.org/dspace/2025/1/";
 
     private final TitaniumJsonLd titaniumJsonLd = new TitaniumJsonLd();
     private final ObjectMapper mapper = new ObjectMapper();
@@ -59,14 +62,7 @@ public class EdcClientParser {
     }
 
     /**
-     * Parse an EDC discovery response payload to find an applicable policy for the local
-     * participant and construct an {@link InitData} instance containing the policy JSON (as a
-     * string) and the dataset id.
-     *
-     * <p>The method iterates the "dataset" array in the given JSON root, matches an element where
-     * "@id" equals "id", and reads the first element of "hasPolicy". It then sets "odrl:target" to
-     * the dataset id and "odrl:assigner" to the root's "participantId" before returning the policy
-     * JSON.
+     * Parses EDC catalog, finds suitable policy, prepares it for a contract negotiation request.
      *
      * @param catalog the root JSON node of the discovery response, i.e., the catalog
      * @return an {@link InitData} containing the prepared policy JSON string and dataset id
@@ -86,12 +82,14 @@ public class EdcClientParser {
 
             ObjectNode policy = (ObjectNode) policyNodes.get(0);
 
-            ObjectNode target = policy.objectNode();
+            ObjectNode target = mapper.createObjectNode();
             target.set("@id", idNode);
             policy.set(String.format("%starget", ODRL_PREFIX), target);
             policy.set(
                     String.format("%sassigner", ODRL_PREFIX),
-                    expanded.get(ODRL_PREFIX + "assigner").get(0));
+                    ofNullable(expanded.get(ODRL_PREFIX + "assigner"))
+                            .orElse(expanded.get(DSPACE_PREFIX + "participantId"))
+                            .get(0));
 
             return new InitData(policy.toString(), idNode.asText());
         }
