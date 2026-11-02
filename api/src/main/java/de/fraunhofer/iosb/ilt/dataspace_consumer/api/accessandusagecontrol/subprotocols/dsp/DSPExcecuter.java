@@ -99,7 +99,7 @@ public class DSPExcecuter<C> {
      * @param retryCount the maximum number of polling attempts
      * @throws DSCExecuteException if negotiation fails, times out, or if parameters are invalid
      */
-    private void performPolling(C context, long pollingIntervalMs, int retryCount)
+    private String performPolling(C context, long pollingIntervalMs, int retryCount)
             throws DSCExecuteException {
         // Validate parameters to prevent runtime errors from misconfiguration
         if (pollingIntervalMs <= 0) {
@@ -113,8 +113,13 @@ public class DSPExcecuter<C> {
 
         for (int attempt = 1; attempt <= retryCount; attempt++) {
             // Check if negotiation is finalized
-            if (accessAndUsageControl.isNegotiationFinalized(context)) {
-                return; // Success
+            DSPNegotiationState negotiationState =
+                    accessAndUsageControl.getNegotiationState(context);
+            if (negotiationState.succeeded()) {
+                return negotiationState.agreementId(); // Success
+            } else if (negotiationState.finished()) {
+                throw new DSCExecuteException(
+                        String.format("Negotiation failed: %s", negotiationState.failureMessage()));
             }
 
             // Skip sleep on last failed attempt
@@ -173,9 +178,9 @@ public class DSPExcecuter<C> {
         C context = accessAndUsageControl.initAccess(request);
 
         // 4. Poll until negotiation is finalized (with validated parameters)
-        performPolling(context, pollingIntervalMillis, maxRetries);
+        String agreementId = performPolling(context, pollingIntervalMillis, maxRetries);
 
         // 5. Retrieve and return the access token
-        return accessAndUsageControl.getTokenForAccess(context);
+        return accessAndUsageControl.getTokenForAccess(context, agreementId);
     }
 }

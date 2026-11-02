@@ -15,29 +15,29 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient;
 
-import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.util.List;
+import static de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.template.EdcEndpointTemplates.getTransferProcessStatus;
+
 import java.util.Objects;
-import java.util.logging.Level;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPFilter;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.AuthorizationContext;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.InitData;
-import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.AvailableEdrDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.EdrDTO;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.IdResponseDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.InitNegotiationDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.NegotiationStateDTO;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.TransferProcessDTO;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.http.HttpClient;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.template.EdcEndpointTemplates;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.template.EdcRequestTemplates;
 
 /**
  * HTTP client for interacting with an EDC (Eclipse DataSpace Connector) management API.
@@ -48,13 +48,11 @@ import okhttp3.Response;
  */
 public class EdcClient {
 
-    private String baseURL;
-    private String counterPartyId;
-    private String counterPartyAddress;
-    private String apiKey;
-    private OkHttpClient client;
+    private final String baseURL;
+    private final String counterPartyId;
+    private final String counterPartyAddress;
     private final EdcClientParser parser;
-    private final ObjectMapper mapper;
+    private final HttpClient httpClient;
 
     /**
      * Create a new EdcClient instance.
@@ -64,111 +62,17 @@ public class EdcClient {
      * @param counterPartyAddress address/URL of the counter-party connector (must not be null)
      * @param apiKey API key used for authenticating against the EDC management API (must not be
      *     null)
-     * @param httpClient optional custom OkHttpClient. If {@code null}, a default client will be
-     *     created
      */
     public EdcClient(
-            String baseURL,
-            String counterPartyId,
-            String counterPartyAddress,
-            String apiKey,
-            OkHttpClient httpClient) {
-
+            String baseURL, String counterPartyId, String counterPartyAddress, String apiKey) {
+        this.httpClient = new HttpClient(apiKey);
         this.baseURL = Objects.requireNonNull(baseURL);
         this.counterPartyId = Objects.requireNonNull(counterPartyId);
         this.counterPartyAddress = Objects.requireNonNull(counterPartyAddress);
-        this.apiKey = Objects.requireNonNull(apiKey);
-        this.client = Objects.requireNonNullElseGet(httpClient, OkHttpClient::new);
         this.parser = new EdcClientParser();
-        this.mapper = new ObjectMapper();
     }
 
     private static final Logger LOGGER = Logger.getLogger(EdcClient.class.getName());
-    private static final String LOG_REQUEST_MSG_FORMAT = "{0} request body: {1}";
-    private static final String LOG_RESPONSE_MSG_FORMAT = "{0} response body length: {1}";
-    private static final String APPLICATION_JSON = "application/json";
-
-    private Response getHttpResponse(Request request, String requestName) {
-        try {
-            Response response = client.newCall(request).execute();
-            if (!response.isSuccessful()) {
-                throw new DSCExecuteException(
-                        "Request for "
-                                + requestName
-                                + " ("
-                                + request.url()
-                                + ") not successful: HTTP "
-                                + response.code()
-                                + " - "
-                                + response.message());
-            }
-            return response;
-        } catch (SocketTimeoutException e) {
-            throw new DSCExecuteException(
-                    "Timeout during "
-                            + requestName
-                            + " ("
-                            + request.url()
-                            + ") request: "
-                            + e.getMessage());
-        } catch (IOException exception) {
-            throw new DSCExecuteException(
-                    "Exception on "
-                            + requestName
-                            + "("
-                            + request.url()
-                            + ") request execution: "
-                            + exception.getMessage());
-        }
-    }
-
-    private String getResponseBodyString(Response response, String requestName) {
-        try {
-            return response.body().string();
-        } catch (IOException exception) {
-            throw new DSCExecuteException(
-                    "IO Exception on "
-                            + requestName
-                            + " request string: "
-                            + exception.getMessage());
-        }
-    }
-
-    private Request getHttpRequest(String endpoint, String method, String bodyString) {
-        Request.Builder builder =
-                new Request.Builder()
-                        .url(endpoint)
-                        .addHeader("x-api-key", apiKey)
-                        .addHeader("Accept", APPLICATION_JSON);
-
-        if ("GET".equalsIgnoreCase(method)) {
-            builder.get();
-        } else {
-            MediaType mediaType = MediaType.parse(APPLICATION_JSON);
-            RequestBody body =
-                    bodyString != null
-                            ? RequestBody.create(bodyString, mediaType)
-                            : RequestBody.create(new byte[0], mediaType);
-
-            builder.method(method, body).addHeader("Content-Type", APPLICATION_JSON);
-        }
-
-        return builder.build();
-    }
-
-    private String getResponseString(
-            String endpoint, String body, String httpMethod, String loggingName) {
-        LOGGER.log(Level.FINE, LOG_REQUEST_MSG_FORMAT, new Object[] {loggingName, body});
-        Request request = getHttpRequest(endpoint, httpMethod, body);
-
-        Response response = getHttpResponse(request, loggingName);
-        String responseBodyString = getResponseBodyString(response, loggingName);
-        LOGGER.log(
-                Level.FINE,
-                LOG_RESPONSE_MSG_FORMAT,
-                new Object[] {loggingName, responseBodyString.length()});
-        return responseBodyString;
-    }
 
     /**
      * Fetches the policy (InitData) for the supplied DSP request by querying the EDC catalog.
@@ -182,18 +86,12 @@ public class EdcClient {
      * @throws DSCExecuteException on HTTP errors, timeouts or JSON parsing failures
      */
     public InitData fetchPolicy(DSPRequest dspRequest) throws DSCExecuteException {
-
-        String loggingName = "policy";
-        DSPFilter filter = dspRequest.getFilters();
+        DSPFilter filter = dspRequest.filters();
         String requestBodyString =
                 EdcRequestTemplates.catalogRequest(
                         counterPartyAddress, counterPartyId, filter.key(), filter.value());
         String responseBodyString =
-                getResponseString(
-                        EdcEndpointTemplates.catalogEndpoint(baseURL),
-                        requestBodyString,
-                        "POST",
-                        loggingName);
+                httpClient.post(EdcEndpointTemplates.requestCatalog(baseURL), requestBodyString);
         return parser.parsePolicy(responseBodyString);
     }
 
@@ -209,48 +107,50 @@ public class EdcClient {
      * @throws DSCExecuteException on HTTP errors, timeouts or JSON parsing failures
      */
     public InitNegotiationDTO initiateNegotiation(InitData initData) throws DSCExecuteException {
-
-        String loggingName = "negotiation";
         String requestBodyString =
                 EdcRequestTemplates.contractNegotiation(counterPartyAddress, initData.policy());
         String responseBodyString =
-                getResponseString(
-                        EdcEndpointTemplates.contractNegotiationEndpoint(baseURL),
-                        requestBodyString,
-                        "POST",
-                        loggingName);
-        InitNegotiationDTO initNegotiationDTO =
-                parser.parseJson(
-                        () -> mapper.readValue(responseBodyString, InitNegotiationDTO.class),
-                        loggingName);
+                httpClient.post(
+                        EdcEndpointTemplates.initiateContractNegotiation(baseURL),
+                        requestBodyString);
+        InitNegotiationDTO initNegotiationDTO = parse(responseBodyString, InitNegotiationDTO.class);
 
-        LOGGER.log(Level.FINE, "negotiation: {0}", initNegotiationDTO);
+        logFine("negotiation", initNegotiationDTO);
 
         return initNegotiationDTO;
     }
 
     /**
-     * Queries the EDC for available EDRs (endpoint data references) for the given asset id.
+     * Starts a transfer process at the provider data plane.
      *
      * @param assetId asset identifier to query EDRs for
-     * @return list of {@link AvailableEdrDTO} describing available EDRs (may be empty)
-     * @throws DSCExecuteException on HTTP or parsing errors (thrown as runtime exception by
-     *     helpers)
+     * @param agreementId agreement id of the contract which the asset is bound to.
+     * @return transfer process ID
+     * @throws DSCExecuteException starting transfer process failed.
      */
-    public List<AvailableEdrDTO> getAvailableEDRResponse(String assetId) {
-        String loggingName = "available EDRs";
-        String requestBodyString = EdcRequestTemplates.availableEdrQuery(assetId);
+    public String startTransferProcess(String assetId, String agreementId) {
+        String requestBodyString =
+                EdcRequestTemplates.transferProcessRequest(
+                        assetId, agreementId, counterPartyAddress, counterPartyId);
         String responseBodyString =
-                getResponseString(
-                        EdcEndpointTemplates.availableEDRsEndpoint(baseURL),
-                        requestBodyString,
-                        "POST",
-                        loggingName);
-        return parser.parseJson(
-                () ->
-                        mapper.readValue(
-                                responseBodyString, new TypeReference<List<AvailableEdrDTO>>() {}),
-                loggingName);
+                httpClient.post(
+                        EdcEndpointTemplates.initiateTransferProcess(baseURL), requestBodyString);
+        IdResponseDTO idResponseDTO = parse(responseBodyString, IdResponseDTO.class);
+
+        var future =
+                waitForAgreement(
+                        () ->
+                                parse(
+                                        httpClient.get(
+                                                getTransferProcessStatus(
+                                                        baseURL, idResponseDTO.id())),
+                                        TransferProcessDTO.class));
+
+        try {
+            return future.get().id();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new DSCExecuteException("Waiting for transfer process to start failed", e);
+        }
     }
 
     /**
@@ -262,15 +162,9 @@ public class EdcClient {
      *     helpers)
      */
     public EdrDTO fetchToken(String transferProcessId) {
-        String loggingName = "token";
         String responseBodyString =
-                getResponseString(
-                        EdcEndpointTemplates.tokenEndpoint(baseURL, transferProcessId),
-                        null,
-                        "GET",
-                        loggingName);
-        return parser.parseJson(
-                () -> mapper.readValue(responseBodyString, EdrDTO.class), loggingName);
+                httpClient.get(EdcEndpointTemplates.requestAccessToken(baseURL, transferProcessId));
+        return parse(responseBodyString, EdrDTO.class);
     }
 
     /**
@@ -283,19 +177,55 @@ public class EdcClient {
      *     helpers)
      */
     public NegotiationStateDTO getNegotiationState(AuthorizationContext context) {
-        String loggingName = "negotiation status";
         String responseBodyString =
-                getResponseString(
-                        EdcEndpointTemplates.negotiationStateEndpoint(
-                                baseURL, context.negotiationId()),
-                        null,
-                        "GET",
-                        loggingName);
+                httpClient.get(
+                        EdcEndpointTemplates.getNegotiationStatus(
+                                baseURL, context.negotiationId()));
         NegotiationStateDTO negotiationStateDTO =
-                parser.parseJson(
-                        () -> mapper.readValue(responseBodyString, NegotiationStateDTO.class),
-                        loggingName);
-        LOGGER.log(Level.FINE, "state: {0}", negotiationStateDTO);
+                parse(responseBodyString, NegotiationStateDTO.class);
+        logFine("state", negotiationStateDTO);
         return negotiationStateDTO;
+    }
+
+    private Future<TransferProcessDTO> waitForAgreement(
+            Supplier<TransferProcessDTO> stateSupplier) {
+        Objects.requireNonNull(stateSupplier, "stateSupplier");
+
+        FutureTask<TransferProcessDTO> task =
+                new FutureTask<>(
+                        () -> {
+                            long delayMillis = 500;
+                            final long maxDelayMillis = 5_000;
+
+                            while (true) {
+                                if (Thread.currentThread().isInterrupted()) {
+                                    throw new InterruptedException("Agreement wait interrupted");
+                                }
+
+                                TransferProcessDTO state = stateSupplier.get();
+
+                                if (state.succeeded()) {
+                                    return state;
+                                } else if (state.isFinished()) {
+                                    throw new DSCExecuteException(
+                                            String.format(
+                                                    "Starting transfer process failed: %s", state));
+                                }
+
+                                TimeUnit.MILLISECONDS.sleep(delayMillis);
+                                delayMillis = Math.min(delayMillis * 2, maxDelayMillis);
+                            }
+                        });
+
+        new Thread(task, "agreement-wait").start();
+        return task;
+    }
+
+    private <T> T parse(String toParse, Class<T> clazz) {
+        return parser.parseJson(toParse, clazz);
+    }
+
+    private void logFine(String message, Object objectToLog) {
+        LOGGER.fine(String.format("%s: %s", message, objectToLog));
     }
 }

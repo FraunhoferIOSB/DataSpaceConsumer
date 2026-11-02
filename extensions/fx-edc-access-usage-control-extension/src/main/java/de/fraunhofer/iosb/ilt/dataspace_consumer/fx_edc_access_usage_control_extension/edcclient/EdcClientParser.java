@@ -15,9 +15,6 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,21 +33,11 @@ import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_ext
  */
 public class EdcClientParser {
 
-    private static final Logger LOGGER = Logger.getLogger(EdcClientParser.class.getName());
     private static final String ODRL_PREFIX = "http://www.w3.org/ns/odrl/2/";
     private static final String DCAT_PREFIX = "http://www.w3.org/ns/dcat#";
 
     private final TitaniumJsonLd titaniumJsonLd = new TitaniumJsonLd();
-
-    /**
-     * Functional supplier which may throw a JsonProcessingException when called.
-     *
-     * @param <T> the type of the supplied value
-     */
-    @FunctionalInterface
-    public interface JsonSupplier<T> {
-        T get() throws JsonProcessingException;
-    }
+    private final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Execute a JSON parsing operation that may throw {@link JsonProcessingException} and convert
@@ -58,22 +45,16 @@ public class EdcClientParser {
      * the provided request name.
      *
      * @param <T> the type returned by the parsing operation
-     * @param parsingOperation a supplier that performs JSON parsing and returns a value
-     * @param requestName a human-readable name of the request being parsed, used for logging and
-     *     error messages
+     * @param toParse String to parse to a POJO
+     * @param clazz class of the POJO to parse to
      * @return the result of the parsing operation
      * @throws DSCExecuteException if JSON parsing fails
      */
-    public <T> T parseJson(JsonSupplier<T> parsingOperation, String requestName)
-            throws DSCExecuteException {
+    public <T> T parseJson(String toParse, Class<T> clazz) throws DSCExecuteException {
         try {
-            T result = parsingOperation.get();
-            LOGGER.log(Level.FINE, "successfully parsed {0} response", requestName);
-            return result;
+            return mapper.readValue(toParse, clazz);
         } catch (JsonProcessingException e) {
-            throw new DSCExecuteException(
-                    "Exception on " + requestName + " response JSON parsing: : " + e.getMessage(),
-                    e);
+            throw new DSCExecuteException("Exception on response JSON parsing", e);
         }
     }
 
@@ -95,7 +76,6 @@ public class EdcClientParser {
         ObjectNode expanded = ((ObjectNode) (titaniumJsonLd.expand(catalog)).get(0));
 
         for (JsonNode dataset : expanded.get(String.format("%sdataset", DCAT_PREFIX))) {
-
             JsonNode idNode = dataset.get("@id");
             ArrayNode policyNodes =
                     (ArrayNode) dataset.get(String.format("%shasPolicy", ODRL_PREFIX));
@@ -109,6 +89,9 @@ public class EdcClientParser {
             ObjectNode target = policy.objectNode();
             target.set("@id", idNode);
             policy.set(String.format("%starget", ODRL_PREFIX), target);
+            policy.set(
+                    String.format("%sassigner", ODRL_PREFIX),
+                    expanded.get(ODRL_PREFIX + "assigner").get(0));
 
             return new InitData(policy.toString(), idNode.asText());
         }
