@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient;
+package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.template;
 
 public final class EdcRequestTemplates {
 
@@ -22,13 +22,13 @@ public final class EdcRequestTemplates {
     public static String contractNegotiation(String counterPartyAddress, String policyJson) {
         return """
         {
-        "@context": {
-          "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-        },
-        "@type": "https://w3id.org/edc/v0.0.1/ns/ContractRequest",
-        "https://w3id.org/edc/v0.0.1/ns/counterPartyAddress": "%s",
-        "https://w3id.org/edc/v0.0.1/ns/protocol": "dataspace-protocol-http:2025-1",
-        "https://w3id.org/edc/v0.0.1/ns/policy": %s
+          "@context": {
+            "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          },
+          "@type": "ContractRequest",
+          "counterPartyAddress": "%s",
+          "protocol": "dataspace-protocol-http:2025-1",
+          "policy": %s
         }
         """
                 .formatted(counterPartyAddress, policyJson);
@@ -53,6 +53,25 @@ public final class EdcRequestTemplates {
         }
         """
                 .formatted(assetId);
+    }
+
+    public static String transferProcessRequest(
+            String assetId, String agreementId, String counterPartyAddress, String counterPartyId) {
+        return """
+        {
+          "@context": {
+            "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          },
+          "@type": "TransferRequest",
+          "assetId": "%s",
+          "protocol": "dataspace-protocol-http:2025-1",
+          "contractId": "%s",
+          "counterPartyAddress": "%s",
+          "connectorId": "%s",
+          "transferType": "HttpData-PULL"
+        }
+        """
+                .formatted(assetId, agreementId, counterPartyAddress, counterPartyId);
     }
 
     public static String catalogRequest(

@@ -19,23 +19,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.AccessResponse;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.SubProtocolType;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPAccessAndUsageControl;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPNegotiationState;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPRequest;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.config.Configurable;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.api.exception.DSCExecuteException;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.EdcClient;
-import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.AvailableEdrDTO;
 import de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto.EdrDTO;
-import okhttp3.OkHttpClient;
 import org.pf4j.Extension;
 
-@Extension
 /**
  * Implementation of DSP-based access and usage control that interacts with a FactoryX / EDC-style
  * policy and negotiation API.
@@ -45,13 +42,14 @@ import org.pf4j.Extension;
  * initiation and token retrieval by calling the configured EDC endpoints using OkHttp and parsing
  * JSON responses with Jackson.
  */
+@Extension
 public class AccessUsageControlImpl
         implements DSPAccessAndUsageControl<AuthorizationContext>, Configurable {
 
     private static final Logger LOGGER = Logger.getLogger(AccessUsageControlImpl.class.getName());
 
     private EdcClient client;
-    private CacheService cache;
+    private final CacheService cache;
 
     public AccessUsageControlImpl() {
         cache = new CacheService();
@@ -71,20 +69,8 @@ public class AccessUsageControlImpl
         return types;
     }
 
-    /**
-     * Initiate access negotiation for the provided DSP access request.
-     *
-     * <p>The method queries the catalog for a matching policy, starts a negotiation and returns an
-     * AuthorizationContext containing the negotiation id and the asset id. Any failure during the
-     * process throws an DSCExecuteException.
-     *
-     * @param accessRequest the DSPRequest representing the desired access filters
-     * @return an AuthorizationContext containing negotiation id and asset id
-     * @throws DSCExecuteException if policy lookup or negotiation fails
-     */
     @Override
     public AuthorizationContext initAccess(DSPRequest accessRequest) throws DSCExecuteException {
-
         AuthorizationContext cached = cache.getNegotiationContext(accessRequest);
         if (cached != null) {
             return cached;
@@ -98,24 +84,12 @@ public class AccessUsageControlImpl
         return context;
     }
 
-    /**
-     * Check whether the negotiation associated with the given context has reached a finalized
-     * state.
-     *
-     * <p>The method requests the negotiation state from the remote service and returns true when
-     * the state equals "FINALIZED". If the negotiation id within the context is null the method
-     * returns false.
-     *
-     * @param context the AuthorizationContext containing the negotiation id
-     * @return true if the negotiation state is "FINALIZED", false otherwise
-     */
     @Override
-    public boolean isNegotiationFinalized(AuthorizationContext context) {
-
+    public DSPNegotiationState getNegotiationState(AuthorizationContext context) {
         if (context.negotiationId() == null) {
-            return false;
+            return null;
         }
-        return client.getNegotiationState(context).state().equals("FINALIZED");
+        return client.getNegotiationState(context);
     }
 
     /**
@@ -131,7 +105,7 @@ public class AccessUsageControlImpl
      * @throws DSCExecuteException if no EDRs are available or token retrieval fails
      */
     @Override
-    public AccessResponse getTokenForAccess(AuthorizationContext context)
+    public AccessResponse getTokenForAccess(AuthorizationContext context, String agreementId)
             throws DSCExecuteException {
 
         EdrDTO cached = cache.getToken(context);
@@ -139,14 +113,13 @@ public class AccessUsageControlImpl
             return new AccessResponse(cached.endpoint(), cached.authorization(), context.assetId());
         }
 
-        AvailableEdrDTO edr;
+        String transferProcessId;
         try {
-            edr = client.getAvailableEDRResponse(context.assetId()).getFirst();
+            transferProcessId = client.startTransferProcess(context.assetId(), agreementId);
         } catch (NoSuchElementException exception) {
             throw new DSCExecuteException("No available EDRs found. No token available");
         }
-        String newestTransferProcessID = edr.transferProcessId();
-        EdrDTO dto = client.fetchToken(newestTransferProcessID);
+        EdrDTO dto = client.fetchToken(transferProcessId);
         cache.putToken(context, dto);
         LOGGER.log(Level.FINE, "EDR DTO: {0}", dto);
 
@@ -175,17 +148,6 @@ public class AccessUsageControlImpl
         String counterPartyAddress = config.get("counterPartyAddress").toString();
         String counterPartyId = config.get("counterPartyId").toString();
 
-        this.client =
-                new EdcClient(
-                        baseURL,
-                        counterPartyId,
-                        counterPartyAddress,
-                        apiKey,
-                        new OkHttpClient.Builder()
-                                .connectTimeout(10, TimeUnit.SECONDS)
-                                .readTimeout(10, TimeUnit.SECONDS)
-                                .writeTimeout(10, TimeUnit.SECONDS)
-                                .callTimeout(20, TimeUnit.SECONDS)
-                                .build());
+        this.client = new EdcClient(baseURL, counterPartyId, counterPartyAddress, apiKey);
     }
 }

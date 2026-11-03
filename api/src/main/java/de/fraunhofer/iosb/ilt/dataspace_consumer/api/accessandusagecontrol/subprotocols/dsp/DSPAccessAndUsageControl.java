@@ -43,10 +43,10 @@ public interface DSPAccessAndUsageControl<C> extends AccessAndUsageControl {
      * Checks if negotiation process is finalized
      *
      * @param context C context object which identifies the negotiation process
-     * @return true if finalized, false otherwise
+     * @return The current state of a negotiation.
      * @throws DSCExecuteException in case of errors during checking
      */
-    boolean isNegotiationFinalized(C context) throws DSCExecuteException;
+    DSPNegotiationState getNegotiationState(C context) throws DSCExecuteException;
 
     /**
      * Get token object for gate to access data
@@ -55,7 +55,7 @@ public interface DSPAccessAndUsageControl<C> extends AccessAndUsageControl {
      * @return T token object for accessing data (e.g. include endpoint url and token)
      * @throws DSCExecuteException in case of errors during token retrieval
      */
-    AccessResponse getTokenForAccess(C context) throws DSCExecuteException;
+    AccessResponse getTokenForAccess(C context, String agreementId) throws DSCExecuteException;
 
     @Override
     default List<SubProtocolType> getSupportedSubProtocolTypes() {

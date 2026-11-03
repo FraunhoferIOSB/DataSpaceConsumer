@@ -15,7 +15,9 @@
  */
 package de.fraunhofer.iosb.ilt.dataspace_consumer.fx_edc_access_usage_control_extension.edcclient.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.fraunhofer.iosb.ilt.dataspace_consumer.api.accessandusagecontrol.subprotocols.dsp.DSPNegotiationState;
 
 /**
  * DTO representing the negotiation state as returned by the EDC.
@@ -24,11 +26,43 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * JSON-LD type, the current negotiation state (e.g. "REQUESTED", "FINALIZED", ...), and the
  * associated JSON-LD context.
  *
- * @param type JSON-LD type of the object (e.g. "@type")
  * @param state Current state of the negotiation (e.g. "REQUESTED", "FINALIZED")
+ * @param contractAgreementId The id of an agreement
  * @param context JSON-LD context with namespace aliases (see {@link ContextDTO})
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record NegotiationStateDTO(
-        @JsonProperty("@type") String type,
         String state,
-        @JsonProperty("@context") ContextDTO context) {}
+        String contractAgreementId,
+        String errorDetail,
+        @JsonProperty("@context") ContextDTO context)
+        implements DSPNegotiationState {
+    @Override
+    public boolean succeeded() {
+        return state.equals("FINALIZED");
+    }
+
+    @Override
+    public boolean finished() {
+        return TerminalNegotiationStates.contains(state);
+    }
+
+    @Override
+    public String agreementId() throws IllegalStateException {
+        return contractAgreementId;
+    }
+
+    @Override
+    public String failureMessage() {
+        return errorDetail;
+    }
+
+    enum TerminalNegotiationStates {
+        FINALIZED,
+        TERMINATED;
+
+        public static boolean contains(String stateString) {
+            return FINALIZED.name().equals(stateString) || TERMINATED.name().equals(stateString);
+        }
+    }
+}
