@@ -63,7 +63,7 @@ the [faaast-gate-extension](./extensions/faaast-gate-extension/).
 
 | Name                                                                                         | Description                                                                                                                                                                                                                                                                                                                                                                            | Status | Can be used for  |
 |----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|------------------|
-| [fx-edc-access-usage-control-extension](./extensions/fx-edc-access-usage-control-extension/) | Client which use the [Facotry-X EDC](https://github.com/factory-x-contributions/factoryx-edc) for access control, conform to [ADR 003](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication) and [ADR 009](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp) | ✅     | Hercules MX-Port |
+| [fx-edc-access-usage-control-extension](./extensions/fx-edc-access-usage-control-extension/) | Client which use the [EDC Connector](https://github.com/eclipse-edc/Connector) for access control, conform to [ADR 003](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr003-authentication) and [ADR 009](https://factory-x-contributions.github.io/architecture-decisions/docs/hercules_network_adr/adr009-aas-rest-dsp) | ✅     | Hercules MX-Port |
 | [fx-leo-access-control-extension](./extensions/fx-leo-access-control-extension)              | Conform to the Factory-X Leo access control                                                                                                                                                                                                                                                                                                                                            | ✅     | Leo MX-Port      |
 
 ### Gate
@@ -256,7 +256,15 @@ Option A: REST Hook
 
 ```bash
 curl --request POST \
-  --url "http://localhost:8080/trigger?mxPortName={mxPortName}
+  --url "http://localhost:8080/trigger?mxPortName={mxPortName}"
+```
+→ Trigger via REST to /trigger/config with the MX-Port configuration as request body:
+
+```bash
+curl --request POST \
+  --url "http://localhost:8080/trigger/config" \
+  --header 'Content-Type: application/json' \
+  --data "<MX-Port configuration>"
 ```
 
 Option B: Scheduler
