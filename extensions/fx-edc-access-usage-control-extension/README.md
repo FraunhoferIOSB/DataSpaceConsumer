@@ -1,6 +1,6 @@
-# Factory-X EDC Access & Usage Control Extension
+# EDC Access & Usage Control Extension
 
-This extension manages access control and negotiates contracts with data providers using the Factory-X EDC (Eclipse Dataspace Connector).
+This extension manages access control and negotiates contracts with data providers using the EDC Connector.
 
 ## Configuration
 
