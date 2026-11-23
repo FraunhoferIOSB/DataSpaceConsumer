@@ -25,33 +25,24 @@ on:
         required: false
         type: string
 
-permissions:
-  contents: read
-
 jobs:
   maven:
     name: Maven Build & Test
-    permissions:
-      contents: write
-      actions: read
-      packages: write # write impliziert read
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GITHUB_ACTOR: ${{ github.actor }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Java
         uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: 21
-          # Need to access the packages in private repo
-          # Remove when repo get public
+          # GitHub Packages requires authentication even for public Maven packages
           server-id: github
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
@@ -65,16 +56,16 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Run Spotless Check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
         run: ./mvnw -f ${{ inputs.pom-file }} -B spotless:check
 
       - name: Build & test maven project
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
         run: ./mvnw -f ${{ inputs.pom-file }} -B ${{ inputs.maven-args }} ${{ inputs.maven-phase }}
-
-      - name: Update dependency graph
-        if: github.ref_name == 'main'
-        uses: advanced-security/maven-dependency-submission-action@a64327a7329c9939cf675e458452febe1894a70c # v6.0.1
-        with:
-          maven-args: -f ${{ inputs.pom-file }}
 
       - name: Upload maven build artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
