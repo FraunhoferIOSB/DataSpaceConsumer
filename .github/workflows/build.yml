@@ -28,8 +28,7 @@ jobs:
       packages: write
     with:
       pom-file: "pom.xml"
-      # deploy only on main or tag, otherwise install
-      maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
+      maven-phase: ${{ github.ref_name == 'main' && 'deploy' || 'install' }}
       maven-args: "-N"
 
   build-bom:
@@ -41,8 +40,7 @@ jobs:
       packages: write
     with:
       pom-file: "bom/pom.xml"
-      # deploy only on main or tag, otherwise install
-      maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
+      maven-phase: ${{ github.ref_name == 'main' && 'deploy' || 'install' }}
 
   build-api:
     needs: [build-parent, build-bom]
@@ -53,9 +51,8 @@ jobs:
       packages: write
     with:
       pom-file: "pom.xml"
-      # deploy only on main or tag, otherwise install
-      maven-phase: ${{ (github.ref_name == 'main' || github.ref_type == 'tag') && 'deploy' || 'install' }}
-      maven-args: "-pl api -am"
+      maven-phase: ${{ github.ref_name == 'main' && 'deploy' || 'install' }}
+      maven-args: "-pl api"
 
   build-framework:
     needs: [build-parent, build-bom, build-api]
