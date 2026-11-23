@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Delete old untagged docker images
-        uses: actions/delete-package-versions@v5
+        uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
         with:
             package-name: 'dataspaceconsumer-framework'
             package-type: 'container'
@@ -25,7 +25,7 @@ jobs:
             token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete old Maven snapshots - parent
-        uses: actions/delete-package-versions@v5
+        uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
         with:
             package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.parent'
             package-type: 'maven'
@@ -34,7 +34,7 @@ jobs:
             token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete old Maven snapshots - parent
-        uses: actions/delete-package-versions@v5
+        uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
         with:
             package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.parent'
             package-type: 'maven'
@@ -43,7 +43,7 @@ jobs:
             token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete old Maven snapshots - bom
-        uses: actions/delete-package-versions@v5
+        uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
         with:
             package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.bom'
             package-type: 'maven'
@@ -52,7 +52,7 @@ jobs:
             token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Delete old Maven snapshots - api
-        uses: actions/delete-package-versions@v5
+        uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
         with:
             package-name: 'de.fraunhofer.iosb.ilt.dataspace_consumer.api'
             package-type: 'maven'
