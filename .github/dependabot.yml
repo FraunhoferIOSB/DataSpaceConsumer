@@ -3,28 +3,84 @@ updates:
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
-    open-pull-requests-limit: 50
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
-  # maven for backend
+  # Maven
   - package-ecosystem: "maven"
     directory: "/"
-    open-pull-requests-limit: 50
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    ignore:
+      # Own modules are built in this repository
+      - dependency-name: "de.fraunhofer.iosb.ilt.dataspace_consumer:*"
+    groups:
+      # Library families that must be upgraded together (all update types)
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson*"
+      aas:
+        patterns:
+          - "org.eclipse.digitaltwin.aas4j:*"
+          - "de.fraunhofer.iosb.ilt.faaast*"
+      okhttp:
+        patterns:
+          - "com.squareup.okhttp3:*"
+      maven-build-tooling:
+        patterns:
+          - "org.apache.maven:apache-maven"
+          - "org.apache.maven.plugins:*"
+          - "com.diffplug.spotless:*"
+      # Everything else: minor + patch batched, majors as single PRs
+      maven-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "*"
 
-  # Docker images
+  # Docker base images
   - package-ecosystem: "docker"
     directory: "/framework"
-    open-pull-requests-limit: 50
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    ignore:
+      # Stay on the Java 21 LTS line; Java major upgrades are done manually
+      - dependency-name: "eclipse-temurin"
+        update-types:
+          - "version-update:semver-major"
 
-    # Docker Compose files
+  # Docker Compose deployment
   - package-ecosystem: "docker-compose"
-    open-pull-requests-limit: 20
     directories:
       - "/deployment/docker"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+
+  # Helm chart
+  - package-ecosystem: "helm"
+    directory: "/deployment/helm"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7

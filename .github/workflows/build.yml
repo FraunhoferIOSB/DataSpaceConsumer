@@ -23,8 +23,7 @@ jobs:
   build-parent:
     uses: ./.github/workflows/maven.yml
     permissions:
-      contents: write
-      actions: read
+      contents: read
       packages: write
     with:
       pom-file: "pom.xml"
@@ -35,8 +34,7 @@ jobs:
     needs: [build-parent]
     uses: ./.github/workflows/maven.yml
     permissions:
-      contents: write
-      actions: read
+      contents: read
       packages: write
     with:
       pom-file: "bom/pom.xml"
@@ -46,8 +44,7 @@ jobs:
     needs: [build-parent, build-bom]
     uses: ./.github/workflows/maven.yml
     permissions:
-      contents: write
-      actions: read
+      contents: read
       packages: write
     with:
       pom-file: "pom.xml"
@@ -59,9 +56,8 @@ jobs:
     needs: [build-parent, build-bom, build-api]
     uses: ./.github/workflows/maven.yml
     permissions:
-      contents: write
-      actions: read
-      packages: write
+      contents: read
+      packages: read
     with:
       pom-file: "pom.xml"
       maven-args: "-pl bom,framework -am"
@@ -87,9 +83,8 @@ jobs:
     needs: [build-parent, build-bom, build-api]
     uses: ./.github/workflows/maven.yml
     permissions:
-      contents: write
-      actions: read
-      packages: write
+      contents: read
+      packages: read
     with:
       pom-file: "pom.xml"
       maven-args: "-pl bom,extensions -am"
